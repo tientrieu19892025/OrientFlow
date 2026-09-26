@@ -1,0 +1,69 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/jinkennguyen/OrientFlow/.theos/obj/arm64/OrientFlow.dylib'
+relocations:
+  - { offset: 0x1E, size: 0x8, addend: 0x0, symName: __logosLocalInit, symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0x34 }
+  - { offset: 0x37, size: 0x8, addend: 0x0, symName: _motionMgr, symObjAddr: 0x8E00, symBinAddr: 0xC798, symSize: 0x0 }
+  - { offset: 0x5CB, size: 0x8, addend: 0x0, symName: '__logos_orig$_ungrouped$SpringBoard$applicationDidFinishLaunching$', symObjAddr: 0x8E08, symBinAddr: 0xC7A0, symSize: 0x0 }
+  - { offset: 0x25A5, size: 0x8, addend: 0x0, symName: _tempUnlockedForSession, symObjAddr: 0x8E10, symBinAddr: 0xC7A8, symSize: 0x0 }
+  - { offset: 0x25C1, size: 0x8, addend: 0x0, symName: _lastTriggerTime, symObjAddr: 0x8E18, symBinAddr: 0xC7B0, symSize: 0x0 }
+  - { offset: 0x265A, size: 0x8, addend: 0x0, symName: __logosLocalInit, symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0x34 }
+  - { offset: 0x269D, size: 0x8, addend: 0x0, symName: '__logos_method$_ungrouped$SpringBoard$applicationDidFinishLaunching$', symObjAddr: 0x34, symBinAddr: 0x4034, symSize: 0xE4 }
+  - { offset: 0x26D5, size: 0x8, addend: 0x0, symName: '__logos_method$_ungrouped$SpringBoard$applicationDidFinishLaunching$', symObjAddr: 0x34, symBinAddr: 0x4034, symSize: 0xE4 }
+  - { offset: 0x2813, size: 0x8, addend: 0x0, symName: _ReloadPrefsCallback, symObjAddr: 0x118, symBinAddr: 0x4118, symSize: 0x38 }
+  - { offset: 0x2943, size: 0x8, addend: 0x0, symName: '____logos_method$_ungrouped$SpringBoard$applicationDidFinishLaunching$_block_invoke', symObjAddr: 0x150, symBinAddr: 0x4150, symSize: 0x234 }
+  - { offset: 0x2A98, size: 0x8, addend: 0x0, symName: ___CheckMotionAndSuggest_block_invoke, symObjAddr: 0x384, symBinAddr: 0x4384, symSize: 0x48 }
+  - { offset: 0x2ABD, size: 0x8, addend: 0x0, symName: ___CheckMotionAndSuggest_block_invoke_2, symObjAddr: 0x3CC, symBinAddr: 0x43CC, symSize: 0x68 }
+  - { offset: 0x2F37, size: 0x8, addend: 0x0, symName: '+[OFPrefs sharedInstance]', symObjAddr: 0x0, symBinAddr: 0x4434, symSize: 0x30 }
+  - { offset: 0x2F44, size: 0x8, addend: 0x0, symName: '+[OFPrefs sharedInstance]', symObjAddr: 0x0, symBinAddr: 0x4434, symSize: 0x30 }
+  - { offset: 0x2F6D, size: 0x8, addend: 0x0, symName: _sharedInstance.instance, symObjAddr: 0x23C8, symBinAddr: 0xC7C0, symSize: 0x0 }
+  - { offset: 0x2F82, size: 0x8, addend: 0x0, symName: _sharedInstance.onceToken, symObjAddr: 0x23D0, symBinAddr: 0xC7C8, symSize: 0x0 }
+  - { offset: 0x31CA, size: 0x8, addend: 0x0, symName: '+[OFPrefs sharedInstance].cold.1', symObjAddr: 0x3F4, symBinAddr: 0x59F8, symSize: 0x14 }
+  - { offset: 0x31E5, size: 0x8, addend: 0x0, symName: '+[OFPrefs sharedInstance].cold.1', symObjAddr: 0x3F4, symBinAddr: 0x59F8, symSize: 0x14 }
+  - { offset: 0x31F6, size: 0x8, addend: 0x0, symName: '___25+[OFPrefs sharedInstance]_block_invoke', symObjAddr: 0x30, symBinAddr: 0x4464, symSize: 0x2C }
+  - { offset: 0x321B, size: 0x8, addend: 0x0, symName: '-[OFPrefs init]', symObjAddr: 0x5C, symBinAddr: 0x4490, symSize: 0x50 }
+  - { offset: 0x324F, size: 0x8, addend: 0x0, symName: '-[OFPrefs loadSettings]', symObjAddr: 0xAC, symBinAddr: 0x44E0, symSize: 0x2F8 }
+  - { offset: 0x3391, size: 0x8, addend: 0x0, symName: '-[OFPrefs enabled]', symObjAddr: 0x3A4, symBinAddr: 0x47D8, symSize: 0x8 }
+  - { offset: 0x33C5, size: 0x8, addend: 0x0, symName: '-[OFPrefs setEnabled:]', symObjAddr: 0x3AC, symBinAddr: 0x47E0, symSize: 0x8 }
+  - { offset: 0x33FC, size: 0x8, addend: 0x0, symName: '-[OFPrefs duration]', symObjAddr: 0x3B4, symBinAddr: 0x47E8, symSize: 0x8 }
+  - { offset: 0x342E, size: 0x8, addend: 0x0, symName: '-[OFPrefs setDuration:]', symObjAddr: 0x3BC, symBinAddr: 0x47F0, symSize: 0x8 }
+  - { offset: 0x3468, size: 0x8, addend: 0x0, symName: '-[OFPrefs hapticFeedback]', symObjAddr: 0x3C4, symBinAddr: 0x47F8, symSize: 0x8 }
+  - { offset: 0x349C, size: 0x8, addend: 0x0, symName: '-[OFPrefs setHapticFeedback:]', symObjAddr: 0x3CC, symBinAddr: 0x4800, symSize: 0x8 }
+  - { offset: 0x34D3, size: 0x8, addend: 0x0, symName: '-[OFPrefs position]', symObjAddr: 0x3D4, symBinAddr: 0x4808, symSize: 0x8 }
+  - { offset: 0x3507, size: 0x8, addend: 0x0, symName: '-[OFPrefs setPosition:]', symObjAddr: 0x3DC, symBinAddr: 0x4810, symSize: 0x8 }
+  - { offset: 0x3540, size: 0x8, addend: 0x0, symName: '-[OFPrefs autoRelockOnPortrait]', symObjAddr: 0x3E4, symBinAddr: 0x4818, symSize: 0x8 }
+  - { offset: 0x3574, size: 0x8, addend: 0x0, symName: '-[OFPrefs setAutoRelockOnPortrait:]', symObjAddr: 0x3EC, symBinAddr: 0x4820, symSize: 0x8 }
+  - { offset: 0x367B, size: 0x8, addend: 0x0, symName: '+[OFButtonWindow sharedWindow]', symObjAddr: 0x0, symBinAddr: 0x4828, symSize: 0x30 }
+  - { offset: 0x3688, size: 0x8, addend: 0x0, symName: '+[OFButtonWindow sharedWindow]', symObjAddr: 0x0, symBinAddr: 0x4828, symSize: 0x30 }
+  - { offset: 0x36B1, size: 0x8, addend: 0x0, symName: _sharedWindow.window, symObjAddr: 0x100B0, symBinAddr: 0xC7D0, symSize: 0x0 }
+  - { offset: 0x36C6, size: 0x8, addend: 0x0, symName: _sharedWindow.onceToken, symObjAddr: 0x100B8, symBinAddr: 0xC7D8, symSize: 0x0 }
+  - { offset: 0x767E, size: 0x8, addend: 0x0, symName: '+[OFButtonWindow sharedWindow].cold.1', symObjAddr: 0x11D0, symBinAddr: 0x5A0C, symSize: 0x14 }
+  - { offset: 0x7699, size: 0x8, addend: 0x0, symName: '+[OFButtonWindow sharedWindow].cold.1', symObjAddr: 0x11D0, symBinAddr: 0x5A0C, symSize: 0x14 }
+  - { offset: 0x76AA, size: 0x8, addend: 0x0, symName: '___30+[OFButtonWindow sharedWindow]_block_invoke', symObjAddr: 0x30, symBinAddr: 0x4858, symSize: 0x16C }
+  - { offset: 0x76FB, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow setupButton]', symObjAddr: 0x19C, symBinAddr: 0x49C4, symSize: 0x57C }
+  - { offset: 0x7758, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow hitTest:withEvent:]', symObjAddr: 0x718, symBinAddr: 0x4F40, symSize: 0x13C }
+  - { offset: 0x77B5, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow updateButtonPosition]', symObjAddr: 0x854, symBinAddr: 0x507C, symSize: 0x180 }
+  - { offset: 0x787A, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow showPromptWithOrientation:tapHandler:]', symObjAddr: 0x9D4, symBinAddr: 0x51FC, symSize: 0x214 }
+  - { offset: 0x791B, size: 0x8, addend: 0x0, symName: '___55-[OFButtonWindow showPromptWithOrientation:tapHandler:]_block_invoke', symObjAddr: 0xBE8, symBinAddr: 0x5410, symSize: 0x84 }
+  - { offset: 0x7940, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s, symObjAddr: 0xC6C, symBinAddr: 0x5494, symSize: 0x8 }
+  - { offset: 0x7964, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s, symObjAddr: 0xC74, symBinAddr: 0x549C, symSize: 0x8 }
+  - { offset: 0x7981, size: 0x8, addend: 0x0, symName: '___55-[OFButtonWindow showPromptWithOrientation:tapHandler:]_block_invoke.18', symObjAddr: 0xC7C, symBinAddr: 0x54A4, symSize: 0x8 }
+  - { offset: 0x79B1, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow handleButtonTap]', symObjAddr: 0xC84, symBinAddr: 0x54AC, symSize: 0x134 }
+  - { offset: 0x7A09, size: 0x8, addend: 0x0, symName: '___33-[OFButtonWindow handleButtonTap]_block_invoke', symObjAddr: 0xDB8, symBinAddr: 0x55E0, symSize: 0x6C }
+  - { offset: 0x7A42, size: 0x8, addend: 0x0, symName: '___33-[OFButtonWindow handleButtonTap]_block_invoke_2', symObjAddr: 0xE24, symBinAddr: 0x564C, symSize: 0x68 }
+  - { offset: 0x7A72, size: 0x8, addend: 0x0, symName: '___33-[OFButtonWindow handleButtonTap]_block_invoke_3', symObjAddr: 0xE8C, symBinAddr: 0x56B4, symSize: 0x5C }
+  - { offset: 0x7A97, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow hidePrompt]', symObjAddr: 0xEE8, symBinAddr: 0x5710, symSize: 0xC4 }
+  - { offset: 0x7AC7, size: 0x8, addend: 0x0, symName: '___28-[OFButtonWindow hidePrompt]_block_invoke', symObjAddr: 0xFAC, symBinAddr: 0x57D4, symSize: 0x8C }
+  - { offset: 0x7B00, size: 0x8, addend: 0x0, symName: '___28-[OFButtonWindow hidePrompt]_block_invoke_2', symObjAddr: 0x1038, symBinAddr: 0x5860, symSize: 0x70 }
+  - { offset: 0x7B30, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow actionButton]', symObjAddr: 0x10A8, symBinAddr: 0x58D0, symSize: 0x10 }
+  - { offset: 0x7B64, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow setActionButton:]', symObjAddr: 0x10B8, symBinAddr: 0x58E0, symSize: 0x14 }
+  - { offset: 0x7BA1, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow blurView]', symObjAddr: 0x10CC, symBinAddr: 0x58F4, symSize: 0x10 }
+  - { offset: 0x7BD5, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow setBlurView:]', symObjAddr: 0x10DC, symBinAddr: 0x5904, symSize: 0x14 }
+  - { offset: 0x7C12, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow iconImageView]', symObjAddr: 0x10F0, symBinAddr: 0x5918, symSize: 0x10 }
+  - { offset: 0x7C46, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow setIconImageView:]', symObjAddr: 0x1100, symBinAddr: 0x5928, symSize: 0x14 }
+  - { offset: 0x7C83, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow autoDismissTimer]', symObjAddr: 0x1114, symBinAddr: 0x593C, symSize: 0x10 }
+  - { offset: 0x7CB7, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow setAutoDismissTimer:]', symObjAddr: 0x1124, symBinAddr: 0x594C, symSize: 0x14 }
+  - { offset: 0x7CF4, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow currentTapHandler]', symObjAddr: 0x1138, symBinAddr: 0x5960, symSize: 0x10 }
+  - { offset: 0x7D28, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow setCurrentTapHandler:]', symObjAddr: 0x1148, symBinAddr: 0x5970, symSize: 0xC }
+  - { offset: 0x7D63, size: 0x8, addend: 0x0, symName: '-[OFButtonWindow .cxx_destruct]', symObjAddr: 0x1154, symBinAddr: 0x597C, symSize: 0x7C }
+...
