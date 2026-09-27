@@ -189,8 +189,11 @@
     [_content addSubview:sec2];
     y += 26;
 
+    BOOL isCustomPos = (prefs.position == 3);
+    CGFloat box2Height = isCustomPos ? 280 : 150;
+
     UIView *box2 = [self cardView];
-    box2.frame = CGRectMake(x, y, inner, 150);
+    box2.frame = CGRectMake(x, y, inner, box2Height);
 
     // Duration Slider
     UILabel *durLbl = [[UILabel alloc] initWithFrame:CGRectMake(16, 12, inner - 32, 20)];
@@ -212,15 +215,45 @@
     [box2 addSubview:posLbl];
 
     UISegmentedControl *posSeg = [[UISegmentedControl alloc] initWithItems:@[
-        OFLoc(@"pos_br"), OFLoc(@"pos_bl"), OFLoc(@"pos_tr")
+        OFLoc(@"pos_br"), OFLoc(@"pos_bl"), OFLoc(@"pos_tr"), OFLoc(@"pos_custom")
     ]];
     posSeg.frame = CGRectMake(16, 102, inner - 32, 34);
-    posSeg.selectedSegmentIndex = (prefs.position >= 0 && prefs.position <= 2) ? prefs.position : 0;
+    posSeg.selectedSegmentIndex = (prefs.position >= 0 && prefs.position <= 3) ? prefs.position : 0;
     [posSeg addTarget:self action:@selector(segmentPositionChanged:) forControlEvents:UIControlEventValueChanged];
     [box2 addSubview:posSeg];
 
+    if (isCustomPos) {
+        // Slider Offset X
+        UILabel *xLbl = [[UILabel alloc] initWithFrame:CGRectMake(16, 146, inner - 32, 20)];
+        xLbl.text = [NSString stringWithFormat:@"%@: %.0f%%", OFLoc(@"pos_offset_x"), prefs.offsetX];
+        xLbl.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
+        xLbl.tag = 101;
+        [box2 addSubview:xLbl];
+
+        UISlider *sliderX = [[UISlider alloc] initWithFrame:CGRectMake(16, 170, inner - 32, 28)];
+        sliderX.minimumValue = 5.0;
+        sliderX.maximumValue = 95.0;
+        sliderX.value = prefs.offsetX;
+        [sliderX addTarget:self action:@selector(sliderOffsetXChanged:) forControlEvents:UIControlEventValueChanged];
+        [box2 addSubview:sliderX];
+
+        // Slider Offset Y
+        UILabel *yLbl = [[UILabel alloc] initWithFrame:CGRectMake(16, 210, inner - 32, 20)];
+        yLbl.text = [NSString stringWithFormat:@"%@: %.0f%%", OFLoc(@"pos_offset_y"), prefs.offsetY];
+        yLbl.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
+        yLbl.tag = 102;
+        [box2 addSubview:yLbl];
+
+        UISlider *sliderY = [[UISlider alloc] initWithFrame:CGRectMake(16, 234, inner - 32, 28)];
+        sliderY.minimumValue = 5.0;
+        sliderY.maximumValue = 95.0;
+        sliderY.value = prefs.offsetY;
+        [sliderY addTarget:self action:@selector(sliderOffsetYChanged:) forControlEvents:UIControlEventValueChanged];
+        [box2 addSubview:sliderY];
+    }
+
     [_content addSubview:box2];
-    y += 162;
+    y += (box2Height + 12);
 
     // 4. Section: Language Selection
     UILabel *secLang = [[UILabel alloc] initWithFrame:CGRectMake(x + 4, y, inner, 20)];
@@ -359,6 +392,23 @@
 
 - (void)segmentPositionChanged:(UISegmentedControl *)seg {
     [[OFPrefs sharedInstance] saveKey:@"position" value:@(seg.selectedSegmentIndex)];
+    [self rebuild];
+}
+
+- (void)sliderOffsetXChanged:(UISlider *)sl {
+    [[OFPrefs sharedInstance] saveKey:@"offsetX" value:@(sl.value)];
+    UILabel *lbl = [self.view viewWithTag:101];
+    if (lbl) {
+        lbl.text = [NSString stringWithFormat:@"%@: %.0f%%", OFLoc(@"pos_offset_x"), sl.value];
+    }
+}
+
+- (void)sliderOffsetYChanged:(UISlider *)sl {
+    [[OFPrefs sharedInstance] saveKey:@"offsetY" value:@(sl.value)];
+    UILabel *lbl = [self.view viewWithTag:102];
+    if (lbl) {
+        lbl.text = [NSString stringWithFormat:@"%@: %.0f%%", OFLoc(@"pos_offset_y"), sl.value];
+    }
 }
 
 - (void)segmentLanguageChanged:(UISegmentedControl *)seg {
@@ -375,6 +425,29 @@
 
 - (void)respring {
     pid_t pid;
+    // Try rootless /var/jb paths first, then rootful standard paths
+    NSArray *candidates = @[
+        @{@"bin": @"/var/jb/usr/bin/sbreload", @"args": @[@"sbreload"]},
+        @{@"bin": @"/usr/bin/sbreload", @"args": @[@"sbreload"]},
+        @{@"bin": @"/var/jb/usr/bin/killall", @"args": @[@"killall", @"-9", @"SpringBoard"]},
+        @{@"bin": @"/usr/bin/killall", @"args": @[@"killall", @"-9", @"SpringBoard"]}
+    ];
+
+    for (NSDictionary *cmd in candidates) {
+        NSString *bin = cmd[@"bin"];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:bin]) {
+            NSArray *argsArr = cmd[@"args"];
+            const char **cargs = malloc(sizeof(char *) * (argsArr.count + 1));
+            for (NSUInteger i = 0; i < argsArr.count; i++) {
+                cargs[i] = [argsArr[i] UTF8String];
+            }
+            cargs[argsArr.count] = NULL;
+            int ret = posix_spawn(&pid, [bin UTF8String], NULL, NULL, (char *const *)cargs, NULL);
+            free(cargs);
+            if (ret == 0) return;
+        }
+    }
+    // Fallback standard posix_spawn
     const char *args[] = {"killall", "-9", "SpringBoard", NULL};
     posix_spawn(&pid, "/usr/bin/killall", NULL, NULL, (char *const *)args, NULL);
 }

@@ -15,23 +15,63 @@
 
 static CMMotionManager *motionMgr = nil;
 static UIInterfaceOrientation candidateOrientation = UIInterfaceOrientationUnknown;
+static UIInterfaceOrientation activeLandscapeOrientation = UIInterfaceOrientationUnknown;
 static NSTimeInterval lastTriggerTime = 0;
 static BOOL tempUnlockedForSession = NO;
 
-static void SafeUnlockOrientation(void) {
+static void SafeUnlockAndRotateToOrientation(UIInterfaceOrientation targetOrientation) {
     @try {
         Class lockClass = objc_getClass("SBOrientationLockManager");
         if (lockClass) {
             SBOrientationLockManager *mgr = [lockClass sharedInstance];
-            if (mgr && [mgr respondsToSelector:@selector(isUserLocked)] && [mgr isUserLocked]) {
+            if (mgr) {
                 tempUnlockedForSession = YES;
-                if ([mgr respondsToSelector:@selector(unlock)]) {
-                    [mgr unlock];
+                activeLandscapeOrientation = targetOrientation;
+                if ([mgr respondsToSelector:@selector(isUserLocked)] && [mgr isUserLocked]) {
+                    if ([mgr respondsToSelector:@selector(unlock)]) {
+                        [mgr unlock];
+                    }
                 }
             }
         }
+
+        // Inform UIDevice to force rotate view controllers to the confirmed landscape orientation
+        if (@available(iOS 16.0, *)) {
+            // On iOS 16+, trigger geometry update if possible
+            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                if ([scene isKindOfClass:[UIWindowScene class]]) {
+                    UIWindowScene *windowScene = (UIWindowScene *)scene;
+                    UIInterfaceOrientationMask mask = (targetOrientation == UIInterfaceOrientationLandscapeLeft) ? 
+                        UIInterfaceOrientationMaskLandscapeLeft : UIInterfaceOrientationMaskLandscapeRight;
+                    #pragma clang diagnostic push
+                    #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                    SEL updateSel = NSSelectorFromString(@"requestGeometryUpdateWithPreferences:errorHandler:");
+                    if ([windowScene respondsToSelector:updateSel]) {
+                        Class prefClass = NSClassFromString(@"UIWindowSceneGeometryPreferencesIOS");
+                        if (prefClass) {
+                            id prefsObj = [[prefClass alloc] init];
+                            if ([prefsObj respondsToSelector:@selector(setInterfaceOrientations:)]) {
+                                [prefsObj setValue:@(mask) forKey:@"interfaceOrientations"];
+                                [windowScene performSelector:updateSel withObject:prefsObj withObject:nil];
+                            }
+                        }
+                    }
+                    #pragma clang diagnostic pop
+                }
+            }
+        }
+        
+        // Also trigger UIDevice orientation notification so apps reorient immediately
+        UIDeviceOrientation devOrient = (targetOrientation == UIInterfaceOrientationLandscapeLeft) ? 
+            UIDeviceOrientationLandscapeRight : UIDeviceOrientationLandscapeLeft;
+        @try {
+            [[UIDevice currentDevice] setValue:@(devOrient) forKey:@"orientation"];
+        } @catch (NSException *ex) {}
+
+        // Send orientation changed notification to SpringBoard and active apps
+        [[NSNotificationCenter defaultCenter] postNotificationName:UIDeviceOrientationDidChangeNotification object:[UIDevice currentDevice]];
     } @catch (NSException *e) {
-        NSLog(@"[OrientFlow] Exception in SafeUnlockOrientation: %@", e);
+        NSLog(@"[OrientFlow] Exception in SafeUnlockAndRotate: %@", e);
     }
 }
 
@@ -42,11 +82,18 @@ static void SafeRelockOrientation(void) {
             SBOrientationLockManager *mgr = [lockClass sharedInstance];
             if (mgr) {
                 tempUnlockedForSession = NO;
+                activeLandscapeOrientation = UIInterfaceOrientationUnknown;
                 if ([mgr respondsToSelector:@selector(lock)]) {
                     [mgr lock];
                 }
             }
         }
+        
+        // Notify device back to portrait
+        @try {
+            [[UIDevice currentDevice] setValue:@(UIDeviceOrientationPortrait) forKey:@"orientation"];
+        } @catch (NSException *ex) {}
+        [[NSNotificationCenter defaultCenter] postNotificationName:UIDeviceOrientationDidChangeNotification object:[UIDevice currentDevice]];
     } @catch (NSException *e) {
         NSLog(@"[OrientFlow] Exception in SafeRelockOrientation: %@", e);
     }
@@ -68,7 +115,8 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
 
     BOOL isLocked = [lockMgr respondsToSelector:@selector(isUserLocked)] ? [lockMgr isUserLocked] : NO;
     if (!isLocked && !tempUnlockedForSession) {
-        return; // Device is not locked and not temporarily unlocked -> do nothing
+        // Device is not locked and not in a temporary unlocked session -> do nothing
+        return;
     }
 
     double gx = motion.gravity.x;
@@ -82,18 +130,25 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
 
     UIInterfaceOrientation target = UIInterfaceOrientationUnknown;
 
-    // Landscape detection
-    if (fabs(gx) > 0.70 && fabs(gy) < 0.45) {
-        if (gx > 0.70) {
+    // Landscape detection (gx > 0.65 => LandscapeLeft; gx < -0.65 => LandscapeRight)
+    if (fabs(gx) > 0.65 && fabs(gy) < 0.50) {
+        if (gx > 0.65) {
             target = UIInterfaceOrientationLandscapeLeft;
-        } else if (gx < -0.70) {
+        } else if (gx < -0.65) {
             target = UIInterfaceOrientationLandscapeRight;
         }
-    } else if (gy < -0.75 && fabs(gx) < 0.40) {
+    } else if (gy < -0.70 && fabs(gx) < 0.45) {
         // Device is held upright in Portrait
         if (tempUnlockedForSession && prefs.autoRelockOnPortrait) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 SafeRelockOrientation();
+            });
+        } else {
+            activeLandscapeOrientation = UIInterfaceOrientationUnknown;
+        }
+        if ([[OFButtonWindow sharedWindow] isPromptShowing]) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [[OFButtonWindow sharedWindow] hidePrompt];
             });
         }
         return;
@@ -103,13 +158,19 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
         return;
     }
 
-    NSInteger currentLocked = [lockMgr respondsToSelector:@selector(userLockOrientation)] ? [lockMgr userLockOrientation] : 0;
-    if (target == (UIInterfaceOrientation)currentLocked && isLocked) {
+    // 1. If user already tapped and accepted this exact landscape orientation, DO NOT show prompt again!
+    if (activeLandscapeOrientation == target) {
+        return;
+    }
+
+    // 2. If the button prompt is currently displayed on screen, do not spam or reset
+    if ([[OFButtonWindow sharedWindow] isPromptShowing]) {
         return;
     }
 
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    if (now - lastTriggerTime < 2.0) {
+    // Cooldown 3.5 seconds between prompts for same target
+    if (candidateOrientation == target && (now - lastTriggerTime < 3.5)) {
         return;
     }
 
@@ -118,7 +179,7 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
 
     dispatch_async(dispatch_get_main_queue(), ^{
         [[OFButtonWindow sharedWindow] showPromptWithOrientation:target tapHandler:^{
-            SafeUnlockOrientation();
+            SafeUnlockAndRotateToOrientation(target);
         }];
     });
 }

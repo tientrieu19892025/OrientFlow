@@ -4,4 +4,5 @@
 + (instancetype)sharedWindow;
 - (void)showPromptWithOrientation:(UIInterfaceOrientation)orientation tapHandler:(void (^)(void))tapHandler;
 - (void)hidePrompt;
+- (BOOL)isPromptShowing;
 @end

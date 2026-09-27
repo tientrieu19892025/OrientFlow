@@ -39,6 +39,12 @@
 
     self.hapticFeedback = prefs[@"hapticFeedback"] ? [prefs[@"hapticFeedback"] boolValue] : YES;
     self.position = prefs[@"position"] ? [prefs[@"position"] integerValue] : 0;
+    self.offsetX = prefs[@"offsetX"] ? [prefs[@"offsetX"] doubleValue] : 85.0; // default 85% width (right side)
+    self.offsetY = prefs[@"offsetY"] ? [prefs[@"offsetY"] doubleValue] : 90.0; // default 90% height (bottom side)
+    if (self.offsetX < 5.0) self.offsetX = 5.0;
+    if (self.offsetX > 95.0) self.offsetX = 95.0;
+    if (self.offsetY < 5.0) self.offsetY = 5.0;
+    if (self.offsetY > 95.0) self.offsetY = 95.0;
     self.autoRelockOnPortrait = prefs[@"autoRelockOnPortrait"] ? [prefs[@"autoRelockOnPortrait"] boolValue] : YES;
     self.language = prefs[@"language"] ? [prefs[@"language"] integerValue] : 0;
 }

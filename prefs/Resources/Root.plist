@@ -96,13 +96,51 @@
 				<string>Bottom Right</string>
 				<string>Bottom Left</string>
 				<string>Top Right</string>
+				<string>Custom</string>
 			</array>
 			<key>validValues</key>
 			<array>
 				<integer>0</integer>
 				<integer>1</integer>
 				<integer>2</integer>
+				<integer>3</integer>
 			</array>
+			<key>PostNotification</key>
+			<string>com.jinken.orientflow/ReloadPrefs</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>default</key>
+			<real>85</real>
+			<key>min</key>
+			<real>5</real>
+			<key>max</key>
+			<real>95</real>
+			<key>showValue</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.jinken.orientflow</string>
+			<key>key</key>
+			<string>offsetX</string>
+			<key>PostNotification</key>
+			<string>com.jinken.orientflow/ReloadPrefs</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>default</key>
+			<real>90</real>
+			<key>min</key>
+			<real>5</real>
+			<key>max</key>
+			<real>95</real>
+			<key>showValue</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.jinken.orientflow</string>
+			<key>key</key>
+			<string>offsetY</string>
 			<key>PostNotification</key>
 			<string>com.jinken.orientflow/ReloadPrefs</string>
 		</dict>

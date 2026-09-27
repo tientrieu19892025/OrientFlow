@@ -126,7 +126,8 @@
         if (insets.bottom > 0) bottomInset = insets.bottom;
     }
     
-    NSInteger pos = [OFPrefs sharedInstance].position;
+    OFPrefs *prefs = [OFPrefs sharedInstance];
+    NSInteger pos = prefs.position;
     CGPoint center;
     switch (pos) {
         case 1: // Bottom Left
@@ -135,6 +136,18 @@
         case 2: // Top Right
             center = CGPointMake(width - margin - btnSize / 2.0, 60 + btnSize / 2.0);
             break;
+        case 3: { // Custom (Sliders: % of width & % of height)
+            CGFloat pctX = prefs.offsetX / 100.0;
+            CGFloat pctY = prefs.offsetY / 100.0;
+            CGFloat half = btnSize / 2.0;
+            CGFloat cx = pctX * width;
+            CGFloat cy = pctY * height;
+            // Clamping so button remains on screen
+            cx = MAX(half + 8.0, MIN(width - half - 8.0, cx));
+            cy = MAX(half + 20.0, MIN(height - half - 20.0, cy));
+            center = CGPointMake(cx, cy);
+            break;
+        }
         case 0: // Bottom Right (Default)
         default:
             center = CGPointMake(width - margin - btnSize / 2.0, height - bottomInset - btnSize / 2.0 - 10);
@@ -234,6 +247,10 @@
             self.hidden = YES;
         }
     }];
+}
+
+- (BOOL)isPromptShowing {
+    return !self.hidden && self.actionButton.alpha > 0.1;
 }
 
 @end

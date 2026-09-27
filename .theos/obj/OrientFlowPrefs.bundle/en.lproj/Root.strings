@@ -1,9 +1,0 @@
-"ENABLE_TWEAK" = "Enable OrientFlow";
-"SETTINGS" = "Configuration";
-"DURATION_FOOTER" = "Display duration of the rotation prompt before fading away.";
-"HAPTIC_FEEDBACK" = "Haptic Vibration";
-"AUTO_RELOCK" = "Auto Re-Lock on Portrait";
-"POSITION" = "Prompt Position";
-"DONATE_HEADER" = "Support & Donate";
-"DONATE_FOOTER" = "Support development: MB Bank 0345140889 - Nguyen Tien Trieu";
-"RESPRING" = "Apply & Respring";
