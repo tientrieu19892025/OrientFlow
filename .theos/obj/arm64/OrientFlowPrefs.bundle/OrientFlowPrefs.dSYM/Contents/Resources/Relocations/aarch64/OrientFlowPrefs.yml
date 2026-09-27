@@ -3,41 +3,53 @@ triple:          'arm64-apple-darwin'
 binary-path:     '/Users/jinkennguyen/OrientFlow/.theos/obj/arm64/OrientFlowPrefs.bundle/OrientFlowPrefs'
 relocations:
   - { offset: 0x1E, size: 0x8, addend: 0x0, symName: '-[OFRootListController specifiers]', symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0xC }
-  - { offset: 0x30B8, size: 0x8, addend: 0x0, symName: '-[OFRootListController specifiers]', symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0xC }
-  - { offset: 0x30E8, size: 0x8, addend: 0x0, symName: '-[OFRootListController loadView]', symObjAddr: 0xC, symBinAddr: 0x400C, symSize: 0x14C }
-  - { offset: 0x3118, size: 0x8, addend: 0x0, symName: '-[OFRootListController viewDidLoad]', symObjAddr: 0x158, symBinAddr: 0x4158, symSize: 0x48 }
-  - { offset: 0x3148, size: 0x8, addend: 0x0, symName: '-[OFRootListController viewWillAppear:]', symObjAddr: 0x1A0, symBinAddr: 0x41A0, symSize: 0x50 }
-  - { offset: 0x3187, size: 0x8, addend: 0x0, symName: '-[OFRootListController viewDidLayoutSubviews]', symObjAddr: 0x1F0, symBinAddr: 0x41F0, symSize: 0x90 }
-  - { offset: 0x31C6, size: 0x8, addend: 0x0, symName: '-[OFRootListController hideStockTable]', symObjAddr: 0x280, symBinAddr: 0x4280, symSize: 0x84 }
-  - { offset: 0x321E, size: 0x8, addend: 0x0, symName: '-[OFRootListController cardView]', symObjAddr: 0x304, symBinAddr: 0x4304, symSize: 0xC0 }
-  - { offset: 0x325D, size: 0x8, addend: 0x0, symName: '-[OFRootListController rebuild]', symObjAddr: 0x3C4, symBinAddr: 0x43C4, symSize: 0xEA0 }
-  - { offset: 0x3419, size: 0x8, addend: 0x0, symName: '-[OFRootListController saveKey:value:]', symObjAddr: 0x1264, symBinAddr: 0x5264, symSize: 0x50 }
-  - { offset: 0x34A9, size: 0x8, addend: 0x0, symName: '-[OFRootListController switchEnabledChanged:]', symObjAddr: 0x12B4, symBinAddr: 0x52B4, symSize: 0x5C }
-  - { offset: 0x355D, size: 0x8, addend: 0x0, symName: '-[OFRootListController switchEnabledChanged:]', symObjAddr: 0x12B4, symBinAddr: 0x52B4, symSize: 0x5C }
-  - { offset: 0x359C, size: 0x8, addend: 0x0, symName: '-[OFRootListController switchHapticChanged:]', symObjAddr: 0x1310, symBinAddr: 0x5310, symSize: 0x5C }
-  - { offset: 0x35DB, size: 0x8, addend: 0x0, symName: '-[OFRootListController switchRelockChanged:]', symObjAddr: 0x136C, symBinAddr: 0x536C, symSize: 0x5C }
-  - { offset: 0x361A, size: 0x8, addend: 0x0, symName: '-[OFRootListController respring]', symObjAddr: 0x13C8, symBinAddr: 0x53C8, symSize: 0x74 }
-  - { offset: 0x371C, size: 0x8, addend: 0x0, symName: '-[OFRootListController openGitHub]', symObjAddr: 0x143C, symBinAddr: 0x543C, symSize: 0x74 }
-  - { offset: 0x3749, size: 0x8, addend: 0x0, symName: '-[OFRootListController openKofi]', symObjAddr: 0x14B0, symBinAddr: 0x54B0, symSize: 0x74 }
-  - { offset: 0x3776, size: 0x8, addend: 0x0, symName: '-[OFRootListController openPayPal]', symObjAddr: 0x1524, symBinAddr: 0x5524, symSize: 0x74 }
-  - { offset: 0x37A3, size: 0x8, addend: 0x0, symName: '-[OFRootListController .cxx_destruct]', symObjAddr: 0x1598, symBinAddr: 0x5598, symSize: 0x40 }
-  - { offset: 0x4C89, size: 0x8, addend: 0x0, symName: '+[OFPrefs sharedInstance]', symObjAddr: 0x0, symBinAddr: 0x55D8, symSize: 0x30 }
-  - { offset: 0x4C96, size: 0x8, addend: 0x0, symName: '+[OFPrefs sharedInstance]', symObjAddr: 0x0, symBinAddr: 0x55D8, symSize: 0x30 }
-  - { offset: 0x4CBF, size: 0x8, addend: 0x0, symName: _sharedInstance.instance, symObjAddr: 0x23D8, symBinAddr: 0xC688, symSize: 0x0 }
-  - { offset: 0x4CD4, size: 0x8, addend: 0x0, symName: _sharedInstance.onceToken, symObjAddr: 0x23E0, symBinAddr: 0xC690, symSize: 0x0 }
-  - { offset: 0x4F1C, size: 0x8, addend: 0x0, symName: '+[OFPrefs sharedInstance].cold.1', symObjAddr: 0x3F4, symBinAddr: 0x59CC, symSize: 0x14 }
-  - { offset: 0x4F37, size: 0x8, addend: 0x0, symName: '+[OFPrefs sharedInstance].cold.1', symObjAddr: 0x3F4, symBinAddr: 0x59CC, symSize: 0x14 }
-  - { offset: 0x4F48, size: 0x8, addend: 0x0, symName: '___25+[OFPrefs sharedInstance]_block_invoke', symObjAddr: 0x30, symBinAddr: 0x5608, symSize: 0x2C }
-  - { offset: 0x4F6D, size: 0x8, addend: 0x0, symName: '-[OFPrefs init]', symObjAddr: 0x5C, symBinAddr: 0x5634, symSize: 0x50 }
-  - { offset: 0x4FA1, size: 0x8, addend: 0x0, symName: '-[OFPrefs loadSettings]', symObjAddr: 0xAC, symBinAddr: 0x5684, symSize: 0x2F8 }
-  - { offset: 0x50E3, size: 0x8, addend: 0x0, symName: '-[OFPrefs enabled]', symObjAddr: 0x3A4, symBinAddr: 0x597C, symSize: 0x8 }
-  - { offset: 0x5117, size: 0x8, addend: 0x0, symName: '-[OFPrefs setEnabled:]', symObjAddr: 0x3AC, symBinAddr: 0x5984, symSize: 0x8 }
-  - { offset: 0x514E, size: 0x8, addend: 0x0, symName: '-[OFPrefs duration]', symObjAddr: 0x3B4, symBinAddr: 0x598C, symSize: 0x8 }
-  - { offset: 0x5180, size: 0x8, addend: 0x0, symName: '-[OFPrefs setDuration:]', symObjAddr: 0x3BC, symBinAddr: 0x5994, symSize: 0x8 }
-  - { offset: 0x51BA, size: 0x8, addend: 0x0, symName: '-[OFPrefs hapticFeedback]', symObjAddr: 0x3C4, symBinAddr: 0x599C, symSize: 0x8 }
-  - { offset: 0x51EE, size: 0x8, addend: 0x0, symName: '-[OFPrefs setHapticFeedback:]', symObjAddr: 0x3CC, symBinAddr: 0x59A4, symSize: 0x8 }
-  - { offset: 0x5225, size: 0x8, addend: 0x0, symName: '-[OFPrefs position]', symObjAddr: 0x3D4, symBinAddr: 0x59AC, symSize: 0x8 }
-  - { offset: 0x5259, size: 0x8, addend: 0x0, symName: '-[OFPrefs setPosition:]', symObjAddr: 0x3DC, symBinAddr: 0x59B4, symSize: 0x8 }
-  - { offset: 0x5292, size: 0x8, addend: 0x0, symName: '-[OFPrefs autoRelockOnPortrait]', symObjAddr: 0x3E4, symBinAddr: 0x59BC, symSize: 0x8 }
-  - { offset: 0x52C6, size: 0x8, addend: 0x0, symName: '-[OFPrefs setAutoRelockOnPortrait:]', symObjAddr: 0x3EC, symBinAddr: 0x59C4, symSize: 0x8 }
+  - { offset: 0x39, size: 0x8, addend: 0x0, symName: _OFLoc, symObjAddr: 0x1F94, symBinAddr: 0x5F94, symSize: 0x180 }
+  - { offset: 0x5E, size: 0x8, addend: 0x0, symName: _OFLoc.viDict, symObjAddr: 0x14B88, symBinAddr: 0x107C0, symSize: 0x0 }
+  - { offset: 0x73, size: 0x8, addend: 0x0, symName: _OFLoc.enDict, symObjAddr: 0x14B90, symBinAddr: 0x107C8, symSize: 0x0 }
+  - { offset: 0x88, size: 0x8, addend: 0x0, symName: _OFLoc.onceToken, symObjAddr: 0x14B98, symBinAddr: 0x107D0, symSize: 0x0 }
+  - { offset: 0x3209, size: 0x8, addend: 0x0, symName: '-[OFRootListController specifiers]', symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0xC }
+  - { offset: 0x3239, size: 0x8, addend: 0x0, symName: '-[OFRootListController loadView]', symObjAddr: 0xC, symBinAddr: 0x400C, symSize: 0x14C }
+  - { offset: 0x3269, size: 0x8, addend: 0x0, symName: '-[OFRootListController viewDidLoad]', symObjAddr: 0x158, symBinAddr: 0x4158, symSize: 0x48 }
+  - { offset: 0x3299, size: 0x8, addend: 0x0, symName: '-[OFRootListController viewWillAppear:]', symObjAddr: 0x1A0, symBinAddr: 0x41A0, symSize: 0x50 }
+  - { offset: 0x32D8, size: 0x8, addend: 0x0, symName: '-[OFRootListController viewDidLayoutSubviews]', symObjAddr: 0x1F0, symBinAddr: 0x41F0, symSize: 0x90 }
+  - { offset: 0x3317, size: 0x8, addend: 0x0, symName: '-[OFRootListController hideStockTable]', symObjAddr: 0x280, symBinAddr: 0x4280, symSize: 0x84 }
+  - { offset: 0x336F, size: 0x8, addend: 0x0, symName: '-[OFRootListController cardView]', symObjAddr: 0x304, symBinAddr: 0x4304, symSize: 0xC0 }
+  - { offset: 0x33AE, size: 0x8, addend: 0x0, symName: '-[OFRootListController rebuild]', symObjAddr: 0x3C4, symBinAddr: 0x43C4, symSize: 0x1BD0 }
+  - { offset: 0x3873, size: 0x8, addend: 0x0, symName: _OFLoc.cold.1, symObjAddr: 0x2814, symBinAddr: 0x6CE0, symSize: 0x14 }
+  - { offset: 0x388E, size: 0x8, addend: 0x0, symName: _OFLoc.cold.1, symObjAddr: 0x2814, symBinAddr: 0x6CE0, symSize: 0x14 }
+  - { offset: 0x389F, size: 0x8, addend: 0x0, symName: '-[OFRootListController switchEnabledChanged:]', symObjAddr: 0x2114, symBinAddr: 0x6114, symSize: 0x9C }
+  - { offset: 0x38DC, size: 0x8, addend: 0x0, symName: '-[OFRootListController switchHapticChanged:]', symObjAddr: 0x21B0, symBinAddr: 0x61B0, symSize: 0x9C }
+  - { offset: 0x3919, size: 0x8, addend: 0x0, symName: '-[OFRootListController switchRelockChanged:]', symObjAddr: 0x224C, symBinAddr: 0x624C, symSize: 0x9C }
+  - { offset: 0x3956, size: 0x8, addend: 0x0, symName: '-[OFRootListController sliderDurationChanged:]', symObjAddr: 0x22E8, symBinAddr: 0x62E8, symSize: 0xA4 }
+  - { offset: 0x3993, size: 0x8, addend: 0x0, symName: '-[OFRootListController segmentPositionChanged:]', symObjAddr: 0x238C, symBinAddr: 0x638C, symSize: 0x9C }
+  - { offset: 0x39D0, size: 0x8, addend: 0x0, symName: '-[OFRootListController segmentLanguageChanged:]', symObjAddr: 0x2428, symBinAddr: 0x6428, symSize: 0xB0 }
+  - { offset: 0x3A11, size: 0x8, addend: 0x0, symName: '-[OFRootListController copyBankAccount]', symObjAddr: 0x24D8, symBinAddr: 0x64D8, symSize: 0xF0 }
+  - { offset: 0x3A5F, size: 0x8, addend: 0x0, symName: '-[OFRootListController respring]', symObjAddr: 0x25C8, symBinAddr: 0x65C8, symSize: 0x74 }
+  - { offset: 0x3B61, size: 0x8, addend: 0x0, symName: '-[OFRootListController openGitHub]', symObjAddr: 0x263C, symBinAddr: 0x663C, symSize: 0x74 }
+  - { offset: 0x3B8E, size: 0x8, addend: 0x0, symName: '-[OFRootListController openKofi]', symObjAddr: 0x26B0, symBinAddr: 0x66B0, symSize: 0x74 }
+  - { offset: 0x3BBB, size: 0x8, addend: 0x0, symName: '-[OFRootListController openPayPal]', symObjAddr: 0x2724, symBinAddr: 0x6724, symSize: 0x74 }
+  - { offset: 0x3BE8, size: 0x8, addend: 0x0, symName: '-[OFRootListController .cxx_destruct]', symObjAddr: 0x2798, symBinAddr: 0x6798, symSize: 0x40 }
+  - { offset: 0x3C18, size: 0x8, addend: 0x0, symName: ___OFLoc_block_invoke, symObjAddr: 0x27D8, symBinAddr: 0x67D8, symSize: 0x3C }
+  - { offset: 0x53E1, size: 0x8, addend: 0x0, symName: '+[OFPrefs sharedInstance]', symObjAddr: 0x0, symBinAddr: 0x6814, symSize: 0x30 }
+  - { offset: 0x53EE, size: 0x8, addend: 0x0, symName: '+[OFPrefs sharedInstance]', symObjAddr: 0x0, symBinAddr: 0x6814, symSize: 0x30 }
+  - { offset: 0x5417, size: 0x8, addend: 0x0, symName: _sharedInstance.instance, symObjAddr: 0x2B98, symBinAddr: 0x107D8, symSize: 0x0 }
+  - { offset: 0x542C, size: 0x8, addend: 0x0, symName: _sharedInstance.onceToken, symObjAddr: 0x2BA0, symBinAddr: 0x107E0, symSize: 0x0 }
+  - { offset: 0x56B0, size: 0x8, addend: 0x0, symName: '+[OFPrefs sharedInstance].cold.1', symObjAddr: 0x4CC, symBinAddr: 0x6CF4, symSize: 0x14 }
+  - { offset: 0x56CB, size: 0x8, addend: 0x0, symName: '+[OFPrefs sharedInstance].cold.1', symObjAddr: 0x4CC, symBinAddr: 0x6CF4, symSize: 0x14 }
+  - { offset: 0x56DC, size: 0x8, addend: 0x0, symName: '___25+[OFPrefs sharedInstance]_block_invoke', symObjAddr: 0x30, symBinAddr: 0x6844, symSize: 0x2C }
+  - { offset: 0x5701, size: 0x8, addend: 0x0, symName: '-[OFPrefs init]', symObjAddr: 0x5C, symBinAddr: 0x6870, symSize: 0x50 }
+  - { offset: 0x5735, size: 0x8, addend: 0x0, symName: '-[OFPrefs loadSettings]', symObjAddr: 0xAC, symBinAddr: 0x68C0, symSize: 0x364 }
+  - { offset: 0x5865, size: 0x8, addend: 0x0, symName: '-[OFPrefs saveKey:value:]', symObjAddr: 0x410, symBinAddr: 0x6C24, symSize: 0x5C }
+  - { offset: 0x599A, size: 0x8, addend: 0x0, symName: '-[OFPrefs enabled]', symObjAddr: 0x46C, symBinAddr: 0x6C80, symSize: 0x8 }
+  - { offset: 0x59CE, size: 0x8, addend: 0x0, symName: '-[OFPrefs setEnabled:]', symObjAddr: 0x474, symBinAddr: 0x6C88, symSize: 0x8 }
+  - { offset: 0x5A05, size: 0x8, addend: 0x0, symName: '-[OFPrefs duration]', symObjAddr: 0x47C, symBinAddr: 0x6C90, symSize: 0x8 }
+  - { offset: 0x5A37, size: 0x8, addend: 0x0, symName: '-[OFPrefs setDuration:]', symObjAddr: 0x484, symBinAddr: 0x6C98, symSize: 0x8 }
+  - { offset: 0x5A71, size: 0x8, addend: 0x0, symName: '-[OFPrefs hapticFeedback]', symObjAddr: 0x48C, symBinAddr: 0x6CA0, symSize: 0x8 }
+  - { offset: 0x5AA5, size: 0x8, addend: 0x0, symName: '-[OFPrefs setHapticFeedback:]', symObjAddr: 0x494, symBinAddr: 0x6CA8, symSize: 0x8 }
+  - { offset: 0x5ADC, size: 0x8, addend: 0x0, symName: '-[OFPrefs position]', symObjAddr: 0x49C, symBinAddr: 0x6CB0, symSize: 0x8 }
+  - { offset: 0x5B10, size: 0x8, addend: 0x0, symName: '-[OFPrefs setPosition:]', symObjAddr: 0x4A4, symBinAddr: 0x6CB8, symSize: 0x8 }
+  - { offset: 0x5B49, size: 0x8, addend: 0x0, symName: '-[OFPrefs autoRelockOnPortrait]', symObjAddr: 0x4AC, symBinAddr: 0x6CC0, symSize: 0x8 }
+  - { offset: 0x5B7D, size: 0x8, addend: 0x0, symName: '-[OFPrefs setAutoRelockOnPortrait:]', symObjAddr: 0x4B4, symBinAddr: 0x6CC8, symSize: 0x8 }
+  - { offset: 0x5BB4, size: 0x8, addend: 0x0, symName: '-[OFPrefs language]', symObjAddr: 0x4BC, symBinAddr: 0x6CD0, symSize: 0x8 }
+  - { offset: 0x5BE8, size: 0x8, addend: 0x0, symName: '-[OFPrefs setLanguage:]', symObjAddr: 0x4C4, symBinAddr: 0x6CD8, symSize: 0x8 }
 ...

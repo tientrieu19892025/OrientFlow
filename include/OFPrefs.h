@@ -9,10 +9,12 @@
 @property (nonatomic, assign) BOOL enabled;
 @property (nonatomic, assign) CGFloat duration;
 @property (nonatomic, assign) BOOL hapticFeedback;
-@property (nonatomic, assign) NSInteger position; // 0 = Bottom Right, 1 = Bottom Left, 2 = Top Right, 3 = Dynamic
+@property (nonatomic, assign) NSInteger position; // 0 = Bottom Right, 1 = Bottom Left, 2 = Top Right
 @property (nonatomic, assign) BOOL autoRelockOnPortrait;
+@property (nonatomic, assign) NSInteger language; // 0 = Auto, 1 = Vietnamese, 2 = English
 
 + (instancetype)sharedInstance;
 - (void)loadSettings;
+- (void)saveKey:(NSString *)key value:(id)val;
 
 @end

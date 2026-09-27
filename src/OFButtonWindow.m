@@ -2,6 +2,18 @@
 #import "OFPrefs.h"
 #import <AudioToolbox/AudioToolbox.h>
 
+@interface OFTouchPassthroughRootViewController : UIViewController
+@end
+
+@implementation OFTouchPassthroughRootViewController
+- (BOOL)shouldAutorotate {
+    return NO;
+}
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
+    return UIInterfaceOrientationMaskAll;
+}
+@end
+
 @interface OFButtonWindow ()
 @property (nonatomic, strong) UIButton *actionButton;
 @property (nonatomic, strong) UIVisualEffectView *blurView;
@@ -16,17 +28,22 @@
     static OFButtonWindow *window = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        UIScreen *mainScreen = [UIScreen mainScreen];
-        window = [[OFButtonWindow alloc] initWithFrame:mainScreen.bounds];
-        window.windowLevel = UIWindowLevelAlert + 100.0;
-        window.backgroundColor = [UIColor clearColor];
-        window.userInteractionEnabled = YES;
-        window.hidden = YES;
+        UIScreen *screen = [UIScreen mainScreen];
+        window = [[OFButtonWindow alloc] initWithFrame:screen.bounds];
         
-        UIViewController *rootVC = [[UIViewController alloc] init];
+        // Use a safe window level that does not interfere with SpringBoard key focus
+        window.windowLevel = UIWindowLevelStatusBar + 50.0;
+        window.backgroundColor = [UIColor clearColor];
+        window.opaque = NO;
+        window.userInteractionEnabled = YES;
+        
+        OFTouchPassthroughRootViewController *rootVC = [[OFTouchPassthroughRootViewController alloc] init];
         rootVC.view.backgroundColor = [UIColor clearColor];
         rootVC.view.userInteractionEnabled = YES;
         window.rootViewController = rootVC;
+        
+        // Critical: Do NOT call makeKeyAndVisible to avoid stealing responder from active apps
+        window.hidden = YES;
         
         [window setupButton];
     });
@@ -40,8 +57,8 @@
     self.actionButton.clipsToBounds = YES;
     self.actionButton.alpha = 0.0;
     
-    // Smooth modern blur effect
-    UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThinMaterial];
+    // Modern Frosted Blur
+    UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThinMaterialDark];
     self.blurView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
     self.blurView.frame = self.actionButton.bounds;
     self.blurView.userInteractionEnabled = NO;
@@ -49,11 +66,17 @@
     self.blurView.clipsToBounds = YES;
     [self.actionButton addSubview:self.blurView];
     
-    // Subtle border glow
-    self.actionButton.layer.borderWidth = 0.8;
-    self.actionButton.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.25].CGColor;
+    // Border glow
+    self.actionButton.layer.borderWidth = 1.0;
+    self.actionButton.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.35].CGColor;
     
-    // SF Symbol Rotate Icon
+    // Smooth shadow
+    self.actionButton.layer.shadowColor = [UIColor blackColor].CGColor;
+    self.actionButton.layer.shadowOffset = CGSizeMake(0, 4);
+    self.actionButton.layer.shadowRadius = 8;
+    self.actionButton.layer.shadowOpacity = 0.35;
+    
+    // SF Symbol icon
     UIImageConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:22 weight:UIImageSymbolWeightSemibold];
     UIImage *img = [UIImage systemImageNamed:@"arrow.triangle.2.circlepath" withConfiguration:config];
     if (!img) {
@@ -61,7 +84,7 @@
     }
     
     self.iconImageView = [[UIImageView alloc] initWithImage:img];
-    self.iconImageView.tintColor = [UIColor labelColor];
+    self.iconImageView.tintColor = [UIColor whiteColor];
     self.iconImageView.contentMode = UIViewContentModeScaleAspectFit;
     self.iconImageView.frame = CGRectMake(11, 11, 30, 30);
     self.iconImageView.userInteractionEnabled = NO;
@@ -71,15 +94,23 @@
     [self.rootViewController.view addSubview:self.actionButton];
 }
 
+- (BOOL)_canBecomeKeyWindow {
+    return NO;
+}
+
+- (BOOL)_canAffectStatusBarAppearance {
+    return NO;
+}
+
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     if (self.hidden || self.actionButton.alpha < 0.05) {
         return nil;
     }
     CGPoint btnPoint = [self.actionButton convertPoint:point fromView:self];
     if ([self.actionButton pointInside:btnPoint withEvent:event]) {
-        return [self.actionButton hitTest:btnPoint withEvent:event];
+        return self.actionButton;
     }
-    return nil; // Pass touches through to apps behind
+    return nil; // Forward all other touches to background apps!
 }
 
 - (void)updateButtonPosition {
@@ -89,7 +120,6 @@
     CGFloat margin = 20.0;
     CGFloat btnSize = 52.0;
     
-    // Safe area bottom inset if available
     CGFloat bottomInset = 34.0;
     if (@available(iOS 11.0, *)) {
         UIEdgeInsets insets = [UIApplication sharedApplication].windows.firstObject.safeAreaInsets;
@@ -115,8 +145,26 @@
 }
 
 - (void)showPromptWithOrientation:(UIInterfaceOrientation)orientation tapHandler:(void (^)(void))tapHandler {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self showPromptWithOrientation:orientation tapHandler:tapHandler];
+        });
+        return;
+    }
+    
     self.currentTapHandler = tapHandler;
     [self.autoDismissTimer invalidate];
+    self.autoDismissTimer = nil;
+    
+    // Sync window scene with active SpringBoard window to prevent iOS 15/16 scene disconnect crash
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
+                self.windowScene = (UIWindowScene *)scene;
+                break;
+            }
+        }
+    }
     
     [self updateButtonPosition];
     self.hidden = NO;
@@ -127,16 +175,14 @@
         [feedback impactOccurred];
     }
     
-    // Animated entry
     self.actionButton.transform = CGAffineTransformMakeScale(0.3, 0.3);
     self.actionButton.alpha = 0.0;
     
-    [UIView animateWithDuration:0.4 delay:0 usingSpringWithDamping:0.65 initialSpringVelocity:0.6 options:UIViewAnimationOptionAllowUserInteraction animations:^{
+    [UIView animateWithDuration:0.35 delay:0 usingSpringWithDamping:0.68 initialSpringVelocity:0.5 options:UIViewAnimationOptionAllowUserInteraction animations:^{
         self.actionButton.alpha = 1.0;
         self.actionButton.transform = CGAffineTransformIdentity;
     } completion:nil];
     
-    // Auto dismiss timer
     CGFloat dur = [OFPrefs sharedInstance].duration;
     self.autoDismissTimer = [NSTimer scheduledTimerWithTimeInterval:dur repeats:NO block:^(NSTimer * _Nonnull timer) {
         [self hidePrompt];
@@ -150,7 +196,6 @@
         [feedback impactOccurred];
     }
     
-    // Tap animation
     [UIView animateWithDuration:0.1 animations:^{
         self.actionButton.transform = CGAffineTransformMakeScale(0.85, 0.85);
     } completion:^(BOOL finished) {
@@ -159,18 +204,29 @@
         }];
     }];
     
-    if (self.currentTapHandler) {
-        self.currentTapHandler();
-    }
+    void (^handler)(void) = self.currentTapHandler;
     [self hidePrompt];
+    
+    if (handler) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            handler();
+        });
+    }
 }
 
 - (void)hidePrompt {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self hidePrompt];
+        });
+        return;
+    }
+    
     [self.autoDismissTimer invalidate];
     self.autoDismissTimer = nil;
     self.currentTapHandler = nil;
     
-    [UIView animateWithDuration:0.25 delay:0 options:UIViewAnimationOptionCurveEaseIn animations:^{
+    [UIView animateWithDuration:0.22 delay:0 options:UIViewAnimationOptionCurveEaseIn animations:^{
         self.actionButton.alpha = 0.0;
         self.actionButton.transform = CGAffineTransformMakeScale(0.5, 0.5);
     } completion:^(BOOL finished) {

@@ -1,3 +1,4 @@
+#import <objc/runtime.h>
 #import <UIKit/UIKit.h>
 #import <CoreMotion/CoreMotion.h>
 #import "OFPrefs.h"
@@ -6,14 +7,10 @@
 @interface SBOrientationLockManager : NSObject
 + (id)sharedInstance;
 - (BOOL)isUserLocked;
-- (void)lock:(UIInterfaceOrientation)orientation;
+- (void)lock;
 - (void)unlock;
-- (UIInterfaceOrientation)userLockOrientation;
-- (BOOL)lockOverrideEnabled;
-- (void)setLockOverrideEnabled:(BOOL)enabled forReason:(id)reason;
-@end
-
-@interface SpringBoard : UIApplication
+- (NSInteger)userLockOrientation;
+- (NSInteger)effectiveLockedOrientation;
 @end
 
 static CMMotionManager *motionMgr = nil;
@@ -21,31 +18,71 @@ static UIInterfaceOrientation candidateOrientation = UIInterfaceOrientationUnkno
 static NSTimeInterval lastTriggerTime = 0;
 static BOOL tempUnlockedForSession = NO;
 
+static void SafeUnlockOrientation(void) {
+    @try {
+        Class lockClass = objc_getClass("SBOrientationLockManager");
+        if (lockClass) {
+            SBOrientationLockManager *mgr = [lockClass sharedInstance];
+            if (mgr && [mgr respondsToSelector:@selector(isUserLocked)] && [mgr isUserLocked]) {
+                tempUnlockedForSession = YES;
+                if ([mgr respondsToSelector:@selector(unlock)]) {
+                    [mgr unlock];
+                }
+            }
+        }
+    } @catch (NSException *e) {
+        NSLog(@"[OrientFlow] Exception in SafeUnlockOrientation: %@", e);
+    }
+}
+
+static void SafeRelockOrientation(void) {
+    @try {
+        Class lockClass = objc_getClass("SBOrientationLockManager");
+        if (lockClass) {
+            SBOrientationLockManager *mgr = [lockClass sharedInstance];
+            if (mgr) {
+                tempUnlockedForSession = NO;
+                if ([mgr respondsToSelector:@selector(lock)]) {
+                    [mgr lock];
+                }
+            }
+        }
+    } @catch (NSException *e) {
+        NSLog(@"[OrientFlow] Exception in SafeRelockOrientation: %@", e);
+    }
+}
+
 static void ReloadPrefsCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
     [[OFPrefs sharedInstance] loadSettings];
 }
 
-static void CheckMotionAndSuggest(CMDeviceMotion *motion) {
+static void ProcessDeviceMotion(CMDeviceMotion *motion) {
     OFPrefs *prefs = [OFPrefs sharedInstance];
     if (!prefs.enabled) return;
-    
-    SBOrientationLockManager *lockMgr = [%c(SBOrientationLockManager) sharedInstance];
-    if (![lockMgr isUserLocked] && !tempUnlockedForSession) {
-        return;
+
+    Class lockClass = objc_getClass("SBOrientationLockManager");
+    if (!lockClass) return;
+
+    SBOrientationLockManager *lockMgr = [lockClass sharedInstance];
+    if (!lockMgr) return;
+
+    BOOL isLocked = [lockMgr respondsToSelector:@selector(isUserLocked)] ? [lockMgr isUserLocked] : NO;
+    if (!isLocked && !tempUnlockedForSession) {
+        return; // Device is not locked and not temporarily unlocked -> do nothing
     }
-    
+
     double gx = motion.gravity.x;
     double gy = motion.gravity.y;
     double gz = motion.gravity.z;
-    
-    // Ignore if device is lying flat on a desk
+
+    // Ignore flat phone on table
     if (fabs(gz) > 0.85) {
         return;
     }
-    
+
     UIInterfaceOrientation target = UIInterfaceOrientationUnknown;
-    
-    // Landscape check: horizontal acceleration dominant
+
+    // Landscape detection
     if (fabs(gx) > 0.70 && fabs(gy) < 0.45) {
         if (gx > 0.70) {
             target = UIInterfaceOrientationLandscapeLeft;
@@ -53,40 +90,35 @@ static void CheckMotionAndSuggest(CMDeviceMotion *motion) {
             target = UIInterfaceOrientationLandscapeRight;
         }
     } else if (gy < -0.75 && fabs(gx) < 0.40) {
-        // Returned to Portrait
+        // Device is held upright in Portrait
         if (tempUnlockedForSession && prefs.autoRelockOnPortrait) {
-            // Re-lock when returning to portrait upright
-            tempUnlockedForSession = NO;
-            [lockMgr lock:UIInterfaceOrientationPortrait];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                SafeRelockOrientation();
+            });
         }
         return;
     }
-    
+
     if (target == UIInterfaceOrientationUnknown) {
         return;
     }
-    
-    UIInterfaceOrientation currentLocked = [lockMgr userLockOrientation];
-    if (target == currentLocked && [lockMgr isUserLocked]) {
-        return; // Already matches locked orientation
+
+    NSInteger currentLocked = [lockMgr respondsToSelector:@selector(userLockOrientation)] ? [lockMgr userLockOrientation] : 0;
+    if (target == (UIInterfaceOrientation)currentLocked && isLocked) {
+        return;
     }
-    
+
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    if (now - lastTriggerTime < 1.8) {
-        return; // Prevent debounce spam
+    if (now - lastTriggerTime < 2.0) {
+        return;
     }
-    
+
     candidateOrientation = target;
     lastTriggerTime = now;
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         [[OFButtonWindow sharedWindow] showPromptWithOrientation:target tapHandler:^{
-            // Khi bấm mở xoay: Mở khoá xoay để màn hình tự xoay theo hướng máy
-            SBOrientationLockManager *mgr = [%c(SBOrientationLockManager) sharedInstance];
-            if ([mgr isUserLocked]) {
-                tempUnlockedForSession = YES;
-                [mgr unlock];
-            }
+            SafeUnlockOrientation();
         }];
     });
 }
@@ -95,9 +127,9 @@ static void CheckMotionAndSuggest(CMDeviceMotion *motion) {
 
 - (void)applicationDidFinishLaunching:(id)application {
     %orig;
-    
+
     [[OFPrefs sharedInstance] loadSettings];
-    
+
     CFNotificationCenterAddObserver(
         CFNotificationCenterGetDarwinNotifyCenter(),
         NULL,
@@ -106,19 +138,19 @@ static void CheckMotionAndSuggest(CMDeviceMotion *motion) {
         NULL,
         CFNotificationSuspensionBehaviorCoalesce
     );
-    
-    // Low frequency updates (8Hz) -> consumes ~0% CPU, saving battery completely
+
+    // 6Hz is extremely gentle on CPU (< 0.2%) while still responding within ~160ms of rotation
     motionMgr = [[CMMotionManager alloc] init];
-    motionMgr.deviceMotionUpdateInterval = 0.125;
-    
+    motionMgr.deviceMotionUpdateInterval = 0.16;
+
     NSOperationQueue *queue = [[NSOperationQueue alloc] init];
-    queue.name = @"com.jinken.orientflow.motionQueue";
+    queue.name = @"com.jinken.orientflow.sensorQueue";
     queue.qualityOfService = NSQualityOfServiceUtility;
-    
+
     if (motionMgr.isDeviceMotionAvailable) {
         [motionMgr startDeviceMotionUpdatesToQueue:queue withHandler:^(CMDeviceMotion * _Nullable motion, NSError * _Nullable error) {
             if (motion && !error) {
-                CheckMotionAndSuggest(motion);
+                ProcessDeviceMotion(motion);
             }
         }];
     }

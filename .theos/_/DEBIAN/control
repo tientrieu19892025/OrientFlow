@@ -11,5 +11,5 @@ Tag: compatible_min::ios13.0 compatible_max::ios26.9 purpose::extension role::en
 Dev: Jin Ken Nguyen
 Sponsor: https://ko-fi.com/jinkennguyen
 Architecture: iphoneos-arm64e
-Version: 1.0.0
-Installed-Size: 376
+Version: 1.0.2
+Installed-Size: 448

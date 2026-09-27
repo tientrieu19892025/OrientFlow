@@ -20,12 +20,7 @@
   /Users/jinkennguyen/theos-roothide/vendor/include/Preferences/PSSwitchTableCell.h \
   /Users/jinkennguyen/theos-roothide/vendor/include/Preferences/PSSystemPolicyForApp.h \
   /Users/jinkennguyen/theos-roothide/vendor/include/Preferences/PreferencesAppController.h \
-  ../include/OFPrefs.h \
-  /Users/jinkennguyen/theos-roothide/vendor/include/rootless.h \
-  /Users/jinkennguyen/theos-roothide/vendor/include/rootless-compat.h \
-  /Users/jinkennguyen/theos-roothide/vendor/include/roothide.h \
-  /Users/jinkennguyen/theos-roothide/vendor/include/roothide/module.modulemap \
-  /Users/jinkennguyen/theos-roothide/vendor/include/roothide/roothide.h
+  ../include/OFPrefs.h ../include/OFLocalize.h
 /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.0.sdk/SDKSettings.json:
 /Users/jinkennguyen/theos-roothide/Prefix.pch:
 OFRootListController.h:
@@ -48,8 +43,4 @@ OFRootListController.h:
 /Users/jinkennguyen/theos-roothide/vendor/include/Preferences/PSSystemPolicyForApp.h:
 /Users/jinkennguyen/theos-roothide/vendor/include/Preferences/PreferencesAppController.h:
 ../include/OFPrefs.h:
-/Users/jinkennguyen/theos-roothide/vendor/include/rootless.h:
-/Users/jinkennguyen/theos-roothide/vendor/include/rootless-compat.h:
-/Users/jinkennguyen/theos-roothide/vendor/include/roothide.h:
-/Users/jinkennguyen/theos-roothide/vendor/include/roothide/module.modulemap:
-/Users/jinkennguyen/theos-roothide/vendor/include/roothide/roothide.h:
+../include/OFLocalize.h:

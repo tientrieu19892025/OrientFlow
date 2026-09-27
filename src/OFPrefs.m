@@ -40,6 +40,14 @@
     self.hapticFeedback = prefs[@"hapticFeedback"] ? [prefs[@"hapticFeedback"] boolValue] : YES;
     self.position = prefs[@"position"] ? [prefs[@"position"] integerValue] : 0;
     self.autoRelockOnPortrait = prefs[@"autoRelockOnPortrait"] ? [prefs[@"autoRelockOnPortrait"] boolValue] : YES;
+    self.language = prefs[@"language"] ? [prefs[@"language"] integerValue] : 0;
+}
+
+- (void)saveKey:(NSString *)key value:(id)val {
+    CFPreferencesSetAppValue((__bridge CFStringRef)key, (__bridge CFPropertyListRef)val, (CFStringRef)kOrientFlowPrefsDomain);
+    CFPreferencesAppSynchronize((CFStringRef)kOrientFlowPrefsDomain);
+    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR(kOrientFlowPrefsNotification), NULL, NULL, YES);
+    [self loadSettings];
 }
 
 @end
