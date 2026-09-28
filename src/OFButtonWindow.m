@@ -7,10 +7,16 @@
 
 @implementation OFTouchPassthroughRootViewController
 - (BOOL)shouldAutorotate {
-    return NO;
+    return YES;
 }
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations {
     return UIInterfaceOrientationMaskAll;
+}
+- (BOOL)prefersStatusBarHidden {
+    return NO;
+}
+- (BOOL)prefersHomeIndicatorAutoHidden {
+    return NO;
 }
 @end
 
@@ -28,73 +34,101 @@
     static OFButtonWindow *window = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        UIScreen *screen = [UIScreen mainScreen];
-        window = [[OFButtonWindow alloc] initWithFrame:screen.bounds];
-        
-        // Use a safe window level that does not interfere with SpringBoard key focus
-        window.windowLevel = UIWindowLevelStatusBar + 50.0;
-        window.backgroundColor = [UIColor clearColor];
-        window.opaque = NO;
-        window.userInteractionEnabled = YES;
-        
-        OFTouchPassthroughRootViewController *rootVC = [[OFTouchPassthroughRootViewController alloc] init];
-        rootVC.view.backgroundColor = [UIColor clearColor];
-        rootVC.view.userInteractionEnabled = YES;
-        window.rootViewController = rootVC;
-        
-        // Critical: Do NOT call makeKeyAndVisible to avoid stealing responder from active apps
-        window.hidden = YES;
-        
-        [window setupButton];
+        @try {
+            CGRect screenBounds = [UIScreen mainScreen].bounds;
+            UIWindowScene *activeScene = nil;
+            if (@available(iOS 13.0, *)) {
+                for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                    if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
+                        activeScene = (UIWindowScene *)scene;
+                        break;
+                    }
+                }
+            }
+            
+            if (@available(iOS 13.0, *)) {
+                if (activeScene) {
+                    window = [[OFButtonWindow alloc] initWithWindowScene:activeScene];
+                }
+            }
+            if (!window) {
+                window = [[OFButtonWindow alloc] initWithFrame:screenBounds];
+            }
+            
+            window.windowLevel = UIWindowLevelStatusBar + 50.0;
+            window.backgroundColor = [UIColor clearColor];
+            window.opaque = NO;
+            window.userInteractionEnabled = YES;
+            
+            OFTouchPassthroughRootViewController *rootVC = [[OFTouchPassthroughRootViewController alloc] init];
+            rootVC.view.backgroundColor = [UIColor clearColor];
+            rootVC.view.userInteractionEnabled = YES;
+            window.rootViewController = rootVC;
+            
+            // Critical: Keep hidden initially, do not become key window
+            window.hidden = YES;
+            
+            [window setupButton];
+        } @catch (NSException *e) {
+            NSLog(@"[OrientFlow] Exception in sharedWindow init: %@", e);
+        }
     });
     return window;
 }
 
 - (void)setupButton {
-    self.actionButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    self.actionButton.frame = CGRectMake(0, 0, 52, 52);
-    self.actionButton.layer.cornerRadius = 26;
-    self.actionButton.clipsToBounds = YES;
-    self.actionButton.alpha = 0.0;
-    
-    // Modern Frosted Blur
-    UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThinMaterialDark];
-    self.blurView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
-    self.blurView.frame = self.actionButton.bounds;
-    self.blurView.userInteractionEnabled = NO;
-    self.blurView.layer.cornerRadius = 26;
-    self.blurView.clipsToBounds = YES;
-    [self.actionButton addSubview:self.blurView];
-    
-    // Border glow
-    self.actionButton.layer.borderWidth = 1.0;
-    self.actionButton.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.35].CGColor;
-    
-    // Smooth shadow
-    self.actionButton.layer.shadowColor = [UIColor blackColor].CGColor;
-    self.actionButton.layer.shadowOffset = CGSizeMake(0, 4);
-    self.actionButton.layer.shadowRadius = 8;
-    self.actionButton.layer.shadowOpacity = 0.35;
-    
-    // SF Symbol icon
-    UIImageConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:22 weight:UIImageSymbolWeightSemibold];
-    UIImage *img = [UIImage systemImageNamed:@"arrow.triangle.2.circlepath" withConfiguration:config];
-    if (!img) {
-        img = [UIImage systemImageNamed:@"rotate.right" withConfiguration:config];
+    @try {
+        self.actionButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        self.actionButton.frame = CGRectMake(0, 0, 52, 52);
+        self.actionButton.layer.cornerRadius = 26;
+        self.actionButton.clipsToBounds = YES;
+        self.actionButton.alpha = 0.0;
+        
+        // Modern Frosted Blur
+        UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThinMaterialDark];
+        self.blurView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
+        self.blurView.frame = self.actionButton.bounds;
+        self.blurView.userInteractionEnabled = NO;
+        self.blurView.layer.cornerRadius = 26;
+        self.blurView.clipsToBounds = YES;
+        [self.actionButton addSubview:self.blurView];
+        
+        // Border glow
+        self.actionButton.layer.borderWidth = 1.0;
+        self.actionButton.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.35].CGColor;
+        
+        // Smooth shadow
+        self.actionButton.layer.shadowColor = [UIColor blackColor].CGColor;
+        self.actionButton.layer.shadowOffset = CGSizeMake(0, 4);
+        self.actionButton.layer.shadowRadius = 8;
+        self.actionButton.layer.shadowOpacity = 0.35;
+        
+        // SF Symbol icon
+        UIImageConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:22 weight:UIImageSymbolWeightSemibold];
+        UIImage *img = [UIImage systemImageNamed:@"arrow.triangle.2.circlepath" withConfiguration:config];
+        if (!img) {
+            img = [UIImage systemImageNamed:@"rotate.right" withConfiguration:config];
+        }
+        
+        self.iconImageView = [[UIImageView alloc] initWithImage:img];
+        self.iconImageView.tintColor = [UIColor whiteColor];
+        self.iconImageView.contentMode = UIViewContentModeScaleAspectFit;
+        self.iconImageView.frame = CGRectMake(11, 11, 30, 30);
+        self.iconImageView.userInteractionEnabled = NO;
+        [self.actionButton addSubview:self.iconImageView];
+        
+        [self.actionButton addTarget:self action:@selector(handleButtonTap) forControlEvents:UIControlEventTouchUpInside];
+        [self.rootViewController.view addSubview:self.actionButton];
+    } @catch (NSException *e) {
+        NSLog(@"[OrientFlow] Exception in setupButton: %@", e);
     }
-    
-    self.iconImageView = [[UIImageView alloc] initWithImage:img];
-    self.iconImageView.tintColor = [UIColor whiteColor];
-    self.iconImageView.contentMode = UIViewContentModeScaleAspectFit;
-    self.iconImageView.frame = CGRectMake(11, 11, 30, 30);
-    self.iconImageView.userInteractionEnabled = NO;
-    [self.actionButton addSubview:self.iconImageView];
-    
-    [self.actionButton addTarget:self action:@selector(handleButtonTap) forControlEvents:UIControlEventTouchUpInside];
-    [self.rootViewController.view addSubview:self.actionButton];
 }
 
 - (BOOL)_canBecomeKeyWindow {
+    return NO;
+}
+
+- (BOOL)canBecomeKeyWindow {
     return NO;
 }
 
@@ -165,65 +199,87 @@
         return;
     }
     
-    self.currentTapHandler = tapHandler;
-    [self.autoDismissTimer invalidate];
-    self.autoDismissTimer = nil;
-    
-    // Sync window scene with active SpringBoard window to prevent iOS 15/16 scene disconnect crash
-    if (@available(iOS 13.0, *)) {
-        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
-                self.windowScene = (UIWindowScene *)scene;
-                break;
+    @try {
+        self.currentTapHandler = tapHandler;
+        [self.autoDismissTimer invalidate];
+        self.autoDismissTimer = nil;
+        
+        // Safely update windowScene only if nil or disconnected to avoid iOS 16 assertion crash
+        if (@available(iOS 13.0, *)) {
+            if (!self.windowScene || self.windowScene.activationState != UISceneActivationStateForegroundActive) {
+                for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                    if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
+                        @try {
+                            self.windowScene = (UIWindowScene *)scene;
+                        } @catch (NSException *scEx) {
+                            NSLog(@"[OrientFlow] Exception setting windowScene: %@", scEx);
+                        }
+                        break;
+                    }
+                }
             }
         }
+        
+        [self updateButtonPosition];
+        self.hidden = NO;
+        
+        if ([OFPrefs sharedInstance].hapticFeedback) {
+            @try {
+                UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+                [feedback prepare];
+                [feedback impactOccurred];
+            } @catch (NSException *hEx) {}
+        }
+        
+        self.actionButton.transform = CGAffineTransformMakeScale(0.3, 0.3);
+        self.actionButton.alpha = 0.0;
+        
+        [UIView animateWithDuration:0.35 delay:0 usingSpringWithDamping:0.68 initialSpringVelocity:0.5 options:UIViewAnimationOptionAllowUserInteraction animations:^{
+            self.actionButton.alpha = 1.0;
+            self.actionButton.transform = CGAffineTransformIdentity;
+        } completion:nil];
+        
+        CGFloat dur = [OFPrefs sharedInstance].duration;
+        self.autoDismissTimer = [NSTimer scheduledTimerWithTimeInterval:dur repeats:NO block:^(NSTimer * _Nonnull timer) {
+            [self hidePrompt];
+        }];
+    } @catch (NSException *e) {
+        NSLog(@"[OrientFlow] Exception in showPromptWithOrientation: %@", e);
     }
-    
-    [self updateButtonPosition];
-    self.hidden = NO;
-    
-    if ([OFPrefs sharedInstance].hapticFeedback) {
-        UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
-        [feedback prepare];
-        [feedback impactOccurred];
-    }
-    
-    self.actionButton.transform = CGAffineTransformMakeScale(0.3, 0.3);
-    self.actionButton.alpha = 0.0;
-    
-    [UIView animateWithDuration:0.35 delay:0 usingSpringWithDamping:0.68 initialSpringVelocity:0.5 options:UIViewAnimationOptionAllowUserInteraction animations:^{
-        self.actionButton.alpha = 1.0;
-        self.actionButton.transform = CGAffineTransformIdentity;
-    } completion:nil];
-    
-    CGFloat dur = [OFPrefs sharedInstance].duration;
-    self.autoDismissTimer = [NSTimer scheduledTimerWithTimeInterval:dur repeats:NO block:^(NSTimer * _Nonnull timer) {
-        [self hidePrompt];
-    }];
 }
 
 - (void)handleButtonTap {
-    if ([OFPrefs sharedInstance].hapticFeedback) {
-        UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
-        [feedback prepare];
-        [feedback impactOccurred];
-    }
-    
-    [UIView animateWithDuration:0.1 animations:^{
-        self.actionButton.transform = CGAffineTransformMakeScale(0.85, 0.85);
-    } completion:^(BOOL finished) {
-        [UIView animateWithDuration:0.15 animations:^{
-            self.actionButton.transform = CGAffineTransformIdentity;
+    @try {
+        if ([OFPrefs sharedInstance].hapticFeedback) {
+            @try {
+                UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
+                [feedback prepare];
+                [feedback impactOccurred];
+            } @catch (NSException *hEx) {}
+        }
+        
+        [UIView animateWithDuration:0.1 animations:^{
+            self.actionButton.transform = CGAffineTransformMakeScale(0.85, 0.85);
+        } completion:^(BOOL finished) {
+            [UIView animateWithDuration:0.15 animations:^{
+                self.actionButton.transform = CGAffineTransformIdentity;
+            }];
         }];
-    }];
-    
-    void (^handler)(void) = self.currentTapHandler;
-    [self hidePrompt];
-    
-    if (handler) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            handler();
-        });
+        
+        void (^handler)(void) = self.currentTapHandler;
+        [self hidePrompt];
+        
+        if (handler) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                @try {
+                    handler();
+                } @catch (NSException *tapEx) {
+                    NSLog(@"[OrientFlow] Exception in tap handler: %@", tapEx);
+                }
+            });
+        }
+    } @catch (NSException *e) {
+        NSLog(@"[OrientFlow] Exception in handleButtonTap: %@", e);
     }
 }
 
@@ -235,18 +291,22 @@
         return;
     }
     
-    [self.autoDismissTimer invalidate];
-    self.autoDismissTimer = nil;
-    self.currentTapHandler = nil;
-    
-    [UIView animateWithDuration:0.22 delay:0 options:UIViewAnimationOptionCurveEaseIn animations:^{
-        self.actionButton.alpha = 0.0;
-        self.actionButton.transform = CGAffineTransformMakeScale(0.5, 0.5);
-    } completion:^(BOOL finished) {
-        if (self.actionButton.alpha <= 0.05) {
-            self.hidden = YES;
-        }
-    }];
+    @try {
+        [self.autoDismissTimer invalidate];
+        self.autoDismissTimer = nil;
+        self.currentTapHandler = nil;
+        
+        [UIView animateWithDuration:0.22 delay:0 options:UIViewAnimationOptionCurveEaseIn animations:^{
+            self.actionButton.alpha = 0.0;
+            self.actionButton.transform = CGAffineTransformMakeScale(0.5, 0.5);
+        } completion:^(BOOL finished) {
+            if (self.actionButton.alpha <= 0.05) {
+                self.hidden = YES;
+            }
+        }];
+    } @catch (NSException *e) {
+        NSLog(@"[OrientFlow] Exception in hidePrompt: %@", e);
+    }
 }
 
 - (BOOL)isPromptShowing {

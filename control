@@ -1,6 +1,6 @@
 Package: com.jinken.orientflow
 Name: OrientFlow
-Version: 1.0.3
+Version: 1.0.4
 Architecture: iphoneos-arm
 Description: Smart rotate suggestion popup when orientation lock is enabled. Smooth, lightweight, zero lag.
 Maintainer: Jin Ken Nguyen <jinkennguyen@users.noreply.github.com>

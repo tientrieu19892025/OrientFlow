@@ -18,7 +18,7 @@ static inline NSString *OFLoc(NSString *key) {
     dispatch_once(&onceToken, ^{
         viDict = @{
             @"hero_sub": @"Gợi ý xoay màn hình thông minh khi khoá xoay",
-            @"hero_desc": @"v1.0.3 · Jinken Nguyen - 1989\niOS 13 – 26 · Rootless · Rootful · RootHide",
+            @"hero_desc": @"v1.0.4 · Jinken Nguyen - 1989\niOS 13 – 26 · Rootless · Rootful · RootHide",
             @"sec_general": @"CÀI ĐẶT CHUNG",
             @"enabled": @"Bật OrientFlow",
             @"enabled_sub": @"Kích hoạt gợi ý xoay màn hình thông minh.",
@@ -51,7 +51,7 @@ static inline NSString *OFLoc(NSString *key) {
 
         enDict = @{
             @"hero_sub": @"Smart rotation suggestion popup when lock is active",
-            @"hero_desc": @"v1.0.3 · Jinken Nguyen - 1989\niOS 13 – 26 · Rootless · Rootful · RootHide",
+            @"hero_desc": @"v1.0.4 · Jinken Nguyen - 1989\niOS 13 – 26 · Rootless · Rootful · RootHide",
             @"sec_general": @"GENERAL SETTINGS",
             @"enabled": @"Enable OrientFlow",
             @"enabled_sub": @"Activate smart screen rotation suggestion prompt.",

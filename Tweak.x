@@ -104,84 +104,92 @@ static void ReloadPrefsCallback(CFNotificationCenterRef center, void *observer, 
 }
 
 static void ProcessDeviceMotion(CMDeviceMotion *motion) {
-    OFPrefs *prefs = [OFPrefs sharedInstance];
-    if (!prefs.enabled) return;
+    @try {
+        OFPrefs *prefs = [OFPrefs sharedInstance];
+        if (!prefs.enabled) return;
 
-    Class lockClass = objc_getClass("SBOrientationLockManager");
-    if (!lockClass) return;
+        Class lockClass = objc_getClass("SBOrientationLockManager");
+        if (!lockClass) return;
 
-    SBOrientationLockManager *lockMgr = [lockClass sharedInstance];
-    if (!lockMgr) return;
+        SBOrientationLockManager *lockMgr = [lockClass sharedInstance];
+        if (!lockMgr) return;
 
-    BOOL isLocked = [lockMgr respondsToSelector:@selector(isUserLocked)] ? [lockMgr isUserLocked] : NO;
-    if (!isLocked && !tempUnlockedForSession) {
-        // Device is not locked and not in a temporary unlocked session -> do nothing
-        return;
-    }
-
-    double gx = motion.gravity.x;
-    double gy = motion.gravity.y;
-    double gz = motion.gravity.z;
-
-    // Ignore flat phone on table
-    if (fabs(gz) > 0.85) {
-        return;
-    }
-
-    UIInterfaceOrientation target = UIInterfaceOrientationUnknown;
-
-    // Landscape detection (gx > 0.65 => LandscapeLeft; gx < -0.65 => LandscapeRight)
-    if (fabs(gx) > 0.65 && fabs(gy) < 0.50) {
-        if (gx > 0.65) {
-            target = UIInterfaceOrientationLandscapeLeft;
-        } else if (gx < -0.65) {
-            target = UIInterfaceOrientationLandscapeRight;
+        BOOL isLocked = [lockMgr respondsToSelector:@selector(isUserLocked)] ? [lockMgr isUserLocked] : NO;
+        if (!isLocked && !tempUnlockedForSession) {
+            // Device is not locked and not in a temporary unlocked session -> do nothing
+            return;
         }
-    } else if (gy < -0.70 && fabs(gx) < 0.45) {
-        // Device is held upright in Portrait
-        if (tempUnlockedForSession && prefs.autoRelockOnPortrait) {
+
+        double gx = motion.gravity.x;
+        double gy = motion.gravity.y;
+        double gz = motion.gravity.z;
+
+        // Ignore flat phone on table
+        if (fabs(gz) > 0.85) {
+            return;
+        }
+
+        UIInterfaceOrientation target = UIInterfaceOrientationUnknown;
+
+        // Landscape detection (gx > 0.65 => LandscapeLeft; gx < -0.65 => LandscapeRight)
+        if (fabs(gx) > 0.65 && fabs(gy) < 0.50) {
+            if (gx > 0.65) {
+                target = UIInterfaceOrientationLandscapeLeft;
+            } else if (gx < -0.65) {
+                target = UIInterfaceOrientationLandscapeRight;
+            }
+        } else if (gy < -0.70 && fabs(gx) < 0.45) {
+            // Device is held upright in Portrait
+            if (tempUnlockedForSession && prefs.autoRelockOnPortrait) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    SafeRelockOrientation();
+                });
+            } else {
+                activeLandscapeOrientation = UIInterfaceOrientationUnknown;
+            }
             dispatch_async(dispatch_get_main_queue(), ^{
-                SafeRelockOrientation();
+                @try {
+                    if ([[OFButtonWindow sharedWindow] isPromptShowing]) {
+                        [[OFButtonWindow sharedWindow] hidePrompt];
+                    }
+                } @catch (NSException *ex) {}
             });
-        } else {
-            activeLandscapeOrientation = UIInterfaceOrientationUnknown;
+            return;
         }
-        if ([[OFButtonWindow sharedWindow] isPromptShowing]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [[OFButtonWindow sharedWindow] hidePrompt];
-            });
+
+        if (target == UIInterfaceOrientationUnknown) {
+            return;
         }
-        return;
+
+        // 1. If user already tapped and accepted this exact landscape orientation, DO NOT show prompt again!
+        if (activeLandscapeOrientation == target) {
+            return;
+        }
+
+        NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+        // Cooldown 3.5 seconds between prompts for same target
+        if (candidateOrientation == target && (now - lastTriggerTime < 3.5)) {
+            return;
+        }
+
+        candidateOrientation = target;
+        lastTriggerTime = now;
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            @try {
+                if ([[OFButtonWindow sharedWindow] isPromptShowing]) {
+                    return;
+                }
+                [[OFButtonWindow sharedWindow] showPromptWithOrientation:target tapHandler:^{
+                    SafeUnlockAndRotateToOrientation(target);
+                }];
+            } @catch (NSException *showEx) {
+                NSLog(@"[OrientFlow] Exception in showPrompt dispatch: %@", showEx);
+            }
+        });
+    } @catch (NSException *e) {
+        NSLog(@"[OrientFlow] Exception in ProcessDeviceMotion: %@", e);
     }
-
-    if (target == UIInterfaceOrientationUnknown) {
-        return;
-    }
-
-    // 1. If user already tapped and accepted this exact landscape orientation, DO NOT show prompt again!
-    if (activeLandscapeOrientation == target) {
-        return;
-    }
-
-    // 2. If the button prompt is currently displayed on screen, do not spam or reset
-    if ([[OFButtonWindow sharedWindow] isPromptShowing]) {
-        return;
-    }
-
-    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    // Cooldown 3.5 seconds between prompts for same target
-    if (candidateOrientation == target && (now - lastTriggerTime < 3.5)) {
-        return;
-    }
-
-    candidateOrientation = target;
-    lastTriggerTime = now;
-
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [[OFButtonWindow sharedWindow] showPromptWithOrientation:target tapHandler:^{
-            SafeUnlockAndRotateToOrientation(target);
-        }];
-    });
 }
 
 %hook SpringBoard
