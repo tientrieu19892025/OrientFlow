@@ -80,6 +80,48 @@
 		</dict>
 		<dict>
 			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.jinken.orientflow</string>
+			<key>key</key>
+			<string>lockLandscapeMode</string>
+			<key>label</key>
+			<string>LOCK_LANDSCAPE</string>
+			<key>PostNotification</key>
+			<string>com.jinken.orientflow/ReloadPrefs</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.jinken.orientflow</string>
+			<key>key</key>
+			<string>disableOnLockScreen</string>
+			<key>label</key>
+			<string>DISABLE_LOCK_SCREEN</string>
+			<key>PostNotification</key>
+			<string>com.jinken.orientflow/ReloadPrefs</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.jinken.orientflow</string>
+			<key>key</key>
+			<string>disableOnHomeScreen</string>
+			<key>label</key>
+			<string>DISABLE_HOME_SCREEN</string>
+			<key>PostNotification</key>
+			<string>com.jinken.orientflow/ReloadPrefs</string>
+		</dict>
+		<dict>
+			<key>cell</key>
 			<string>PSLinkListCell</string>
 			<key>default</key>
 			<integer>0</integer>

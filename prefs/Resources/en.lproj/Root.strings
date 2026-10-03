@@ -3,6 +3,9 @@
 "DURATION_FOOTER" = "Display duration of the rotation prompt before fading away.";
 "HAPTIC_FEEDBACK" = "Haptic Vibration";
 "AUTO_RELOCK" = "Auto Re-Lock on Portrait";
+"LOCK_LANDSCAPE" = "Stay Locked in Landscape";
+"DISABLE_LOCK_SCREEN" = "Disable on Lock Screen";
+"DISABLE_HOME_SCREEN" = "Disable on Home Screen";
 "POSITION" = "Prompt Position";
 "DONATE_HEADER" = "Support & Donate";
 "DONATE_FOOTER" = "Support development: MB Bank 0345140889 - Nguyen Tien Trieu";

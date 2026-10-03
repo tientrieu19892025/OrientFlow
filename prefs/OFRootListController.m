@@ -1,4 +1,5 @@
 #import "OFRootListController.h"
+#import "OFAppListController.h"
 #import "../include/OFPrefs.h"
 #import "../include/OFLocalize.h"
 #import <spawn.h>
@@ -127,7 +128,7 @@
     y += 26;
 
     UIView *box1 = [self cardView];
-    box1.frame = CGRectMake(x, y, inner, 216);
+    box1.frame = CGRectMake(x, y, inner, 422);
 
     // Switch 1: Enabled
     UILabel *lbl1 = [[UILabel alloc] initWithFrame:CGRectMake(16, 12, inner - 90, 22)];
@@ -178,8 +179,100 @@
     [sw3 addTarget:self action:@selector(switchRelockChanged:) forControlEvents:UIControlEventValueChanged];
     [box1 addSubview:sw3];
 
+    // Switch 4: Stay Locked in Landscape
+    UILabel *lbl4 = [[UILabel alloc] initWithFrame:CGRectMake(16, 214, inner - 90, 22)];
+    lbl4.text = OFLoc(@"lock_landscape");
+    lbl4.font = [UIFont systemFontOfSize:16 weight:UIFontWeightSemibold];
+    [box1 addSubview:lbl4];
+    UILabel *sub4 = [[UILabel alloc] initWithFrame:CGRectMake(16, 236, inner - 90, 36)];
+    sub4.text = OFLoc(@"lock_landscape_sub");
+    sub4.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
+    sub4.textColor = [UIColor secondaryLabelColor];
+    sub4.numberOfLines = 2;
+    [box1 addSubview:sub4];
+
+    UISwitch *sw4 = [[UISwitch alloc] initWithFrame:CGRectMake(inner - 66, 220, 51, 31)];
+    sw4.on = prefs.lockLandscapeMode;
+    [sw4 addTarget:self action:@selector(switchLockLandscapeChanged:) forControlEvents:UIControlEventValueChanged];
+    [box1 addSubview:sw4];
+
+    // Switch 5: Disable on Lock Screen
+    UILabel *lbl5 = [[UILabel alloc] initWithFrame:CGRectMake(16, 282, inner - 90, 22)];
+    lbl5.text = OFLoc(@"disable_ls");
+    lbl5.font = [UIFont systemFontOfSize:16 weight:UIFontWeightSemibold];
+    [box1 addSubview:lbl5];
+    UILabel *sub5 = [[UILabel alloc] initWithFrame:CGRectMake(16, 304, inner - 90, 36)];
+    sub5.text = OFLoc(@"disable_ls_sub");
+    sub5.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
+    sub5.textColor = [UIColor secondaryLabelColor];
+    sub5.numberOfLines = 2;
+    [box1 addSubview:sub5];
+
+    UISwitch *sw5 = [[UISwitch alloc] initWithFrame:CGRectMake(inner - 66, 288, 51, 31)];
+    sw5.on = prefs.disableOnLockScreen;
+    [sw5 addTarget:self action:@selector(switchDisableLockScreenChanged:) forControlEvents:UIControlEventValueChanged];
+    [box1 addSubview:sw5];
+
+    // Switch 6: Disable on Home Screen
+    UILabel *lbl6 = [[UILabel alloc] initWithFrame:CGRectMake(16, 350, inner - 90, 22)];
+    lbl6.text = OFLoc(@"disable_hs");
+    lbl6.font = [UIFont systemFontOfSize:16 weight:UIFontWeightSemibold];
+    [box1 addSubview:lbl6];
+    UILabel *sub6 = [[UILabel alloc] initWithFrame:CGRectMake(16, 372, inner - 90, 36)];
+    sub6.text = OFLoc(@"disable_hs_sub");
+    sub6.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
+    sub6.textColor = [UIColor secondaryLabelColor];
+    sub6.numberOfLines = 2;
+    [box1 addSubview:sub6];
+
+    UISwitch *sw6 = [[UISwitch alloc] initWithFrame:CGRectMake(inner - 66, 356, 51, 31)];
+    sw6.on = prefs.disableOnHomeScreen;
+    [sw6 addTarget:self action:@selector(switchDisableHomeScreenChanged:) forControlEvents:UIControlEventValueChanged];
+    [box1 addSubview:sw6];
+
     [_content addSubview:box1];
-    y += 228;
+    y += 434;
+
+    // 2.5 Section: Application Filter
+    UILabel *secApp = [[UILabel alloc] initWithFrame:CGRectMake(x + 4, y, inner, 20)];
+    secApp.text = OFLoc(@"sec_app_selection");
+    secApp.font = [UIFont systemFontOfSize:12 weight:UIFontWeightBold];
+    secApp.textColor = [UIColor secondaryLabelColor];
+    [_content addSubview:secApp];
+    y += 26;
+
+    BOOL isFiltering = (prefs.appSelectionMode != 0);
+    CGFloat boxAppHeight = isFiltering ? 116 : 60;
+    UIView *boxApp = [self cardView];
+    boxApp.frame = CGRectMake(x, y, inner, boxAppHeight);
+
+    UISegmentedControl *appSeg = [[UISegmentedControl alloc] initWithItems:@[
+        OFLoc(@"app_mode_all"), OFLoc(@"app_mode_whitelist"), OFLoc(@"app_mode_blacklist")
+    ]];
+    appSeg.frame = CGRectMake(16, 13, inner - 32, 34);
+    appSeg.selectedSegmentIndex = (prefs.appSelectionMode >= 0 && prefs.appSelectionMode <= 2) ? prefs.appSelectionMode : 0;
+    [appSeg addTarget:self action:@selector(segmentAppModeChanged:) forControlEvents:UIControlEventValueChanged];
+    [boxApp addSubview:appSeg];
+
+    if (isFiltering) {
+        UIButton *chooseBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+        chooseBtn.frame = CGRectMake(16, 60, inner - 32, 42);
+        if (@available(iOS 13.0, *)) {
+            chooseBtn.backgroundColor = [UIColor tertiarySystemGroupedBackgroundColor];
+        } else {
+            chooseBtn.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0];
+        }
+        chooseBtn.layer.cornerRadius = 12;
+        NSUInteger count = prefs.selectedApps.count;
+        NSString *btnTitle = [NSString stringWithFormat:@"%@ (%lu)", OFLoc(@"app_choose_btn"), (unsigned long)count];
+        [chooseBtn setTitle:btnTitle forState:UIControlStateNormal];
+        chooseBtn.titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightSemibold];
+        [chooseBtn addTarget:self action:@selector(openAppList) forControlEvents:UIControlEventTouchUpInside];
+        [boxApp addSubview:chooseBtn];
+    }
+
+    [_content addSubview:boxApp];
+    y += (boxAppHeight + 14);
 
     // 3. Section: Appearance & Position
     UILabel *sec2 = [[UILabel alloc] initWithFrame:CGRectMake(x + 4, y, inner, 20)];
@@ -199,12 +292,14 @@
     UILabel *durLbl = [[UILabel alloc] initWithFrame:CGRectMake(16, 12, inner - 32, 20)];
     durLbl.text = [NSString stringWithFormat:@"%@: %.1fs", OFLoc(@"duration_title"), prefs.duration];
     durLbl.font = [UIFont systemFontOfSize:15 weight:UIFontWeightSemibold];
+    durLbl.tag = 100;
     [box2 addSubview:durLbl];
 
     UISlider *slider = [[UISlider alloc] initWithFrame:CGRectMake(16, 36, inner - 32, 28)];
     slider.minimumValue = 1.5;
     slider.maximumValue = 8.0;
     slider.value = prefs.duration;
+    slider.continuous = YES;
     [slider addTarget:self action:@selector(sliderDurationChanged:) forControlEvents:UIControlEventValueChanged];
     [box2 addSubview:slider];
 
@@ -234,6 +329,7 @@
         sliderX.minimumValue = 5.0;
         sliderX.maximumValue = 95.0;
         sliderX.value = prefs.offsetX;
+        sliderX.continuous = YES;
         [sliderX addTarget:self action:@selector(sliderOffsetXChanged:) forControlEvents:UIControlEventValueChanged];
         [box2 addSubview:sliderX];
 
@@ -248,6 +344,7 @@
         sliderY.minimumValue = 5.0;
         sliderY.maximumValue = 95.0;
         sliderY.value = prefs.offsetY;
+        sliderY.continuous = YES;
         [sliderY addTarget:self action:@selector(sliderOffsetYChanged:) forControlEvents:UIControlEventValueChanged];
         [box2 addSubview:sliderY];
     }
@@ -386,8 +483,34 @@
     [[OFPrefs sharedInstance] saveKey:@"autoRelockOnPortrait" value:@(sw.on)];
 }
 
+- (void)switchLockLandscapeChanged:(UISwitch *)sw {
+    [[OFPrefs sharedInstance] saveKey:@"lockLandscapeMode" value:@(sw.on)];
+}
+
+- (void)switchDisableLockScreenChanged:(UISwitch *)sw {
+    [[OFPrefs sharedInstance] saveKey:@"disableOnLockScreen" value:@(sw.on)];
+}
+
+- (void)switchDisableHomeScreenChanged:(UISwitch *)sw {
+    [[OFPrefs sharedInstance] saveKey:@"disableOnHomeScreen" value:@(sw.on)];
+}
+
+- (void)segmentAppModeChanged:(UISegmentedControl *)seg {
+    [[OFPrefs sharedInstance] saveKey:@"appSelectionMode" value:@(seg.selectedSegmentIndex)];
+    [self rebuild];
+}
+
+- (void)openAppList {
+    OFAppListController *vc = [[OFAppListController alloc] init];
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
 - (void)sliderDurationChanged:(UISlider *)sl {
     [[OFPrefs sharedInstance] saveKey:@"duration" value:@(sl.value)];
+    UILabel *lbl = [self.view viewWithTag:100];
+    if (lbl) {
+        lbl.text = [NSString stringWithFormat:@"%@: %.1fs", OFLoc(@"duration_title"), sl.value];
+    }
 }
 
 - (void)segmentPositionChanged:(UISegmentedControl *)seg {

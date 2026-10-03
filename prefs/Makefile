@@ -13,7 +13,7 @@ include $(THEOS)/makefiles/common.mk
 
 BUNDLE_NAME = OrientFlowPrefs
 
-OrientFlowPrefs_FILES = OFRootListController.m ../src/OFPrefs.m
+OrientFlowPrefs_FILES = OFRootListController.m OFAppListController.m ../src/OFPrefs.m
 OrientFlowPrefs_FRAMEWORKS = UIKit CoreGraphics QuartzCore
 OrientFlowPrefs_PRIVATE_FRAMEWORKS = Preferences
 OrientFlowPrefs_LDFLAGS = -F$(THEOS_PROJECT_DIR)/stubs
