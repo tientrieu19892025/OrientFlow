@@ -9,13 +9,6 @@
 - (BOOL)isUserLocked;
 - (void)lock;
 - (void)unlock;
-- (NSInteger)userLockOrientation;
-- (NSInteger)effectiveLockedOrientation;
-@end
-
-@interface SBLockScreenManager : NSObject
-+ (id)sharedInstance;
-- (BOOL)isUILocked;
 @end
 
 @interface SBApplication : NSObject
@@ -23,39 +16,41 @@
 @end
 
 @interface SpringBoard : UIApplication
+- (BOOL)isLocked;
 - (SBApplication *)_accessibilityFrontMostApplication;
 @end
 
 static CMMotionManager *motionMgr = nil;
 static UIInterfaceOrientation candidateOrientation = UIInterfaceOrientationUnknown;
 static UIInterfaceOrientation activeLandscapeOrientation = UIInterfaceOrientationUnknown;
-static BOOL gOrientFlowLockedLandscape = NO;
-static UIInterfaceOrientation gOrientFlowLockedOrientation = UIInterfaceOrientationUnknown;
 static NSTimeInterval lastTriggerTime = 0;
-static NSString *lastActiveBundleID = nil;
+static BOOL tempUnlockedForSession = NO;
+static BOOL isRelocking = NO;
+
+// Thread-safe cached system states updated exclusively on main thread
+static NSString *gCurrentActiveBundleID = @"com.apple.springboard";
+static BOOL gIsScreenLocked = NO;
 
 static void SafeUnlockAndRotateToOrientation(UIInterfaceOrientation targetOrientation) {
-    @try {
-        gOrientFlowLockedOrientation = targetOrientation;
-        gOrientFlowLockedLandscape = YES;
-        activeLandscapeOrientation = targetOrientation;
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            SafeUnlockAndRotateToOrientation(targetOrientation);
+        });
+        return;
+    }
 
+    @try {
         Class lockClass = objc_getClass("SBOrientationLockManager");
         if (lockClass) {
             SBOrientationLockManager *mgr = [lockClass sharedInstance];
             if (mgr) {
-                if ([mgr respondsToSelector:@selector(unlock)]) {
-                    [mgr unlock];
+                tempUnlockedForSession = YES;
+                activeLandscapeOrientation = targetOrientation;
+                if ([mgr respondsToSelector:@selector(isUserLocked)] && [mgr isUserLocked]) {
+                    if ([mgr respondsToSelector:@selector(unlock)]) {
+                        [mgr unlock];
+                    }
                 }
-                
-                // Re-engage system lock with new landscape orientation so Control Center stays active
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.30 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    @try {
-                        if (gOrientFlowLockedLandscape && [mgr respondsToSelector:@selector(lock)]) {
-                            [mgr lock];
-                        }
-                    } @catch (NSException *lkEx) {}
-                });
             }
         }
 
@@ -97,57 +92,39 @@ static void SafeUnlockAndRotateToOrientation(UIInterfaceOrientation targetOrient
 }
 
 static void SafeRelockOrientation(void) {
-    @try {
-        gOrientFlowLockedLandscape = NO;
-        gOrientFlowLockedOrientation = UIInterfaceOrientationPortrait;
-        activeLandscapeOrientation = UIInterfaceOrientationUnknown;
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            SafeRelockOrientation();
+        });
+        return;
+    }
 
+    if (isRelocking) return;
+    isRelocking = YES;
+
+    @try {
         Class lockClass = objc_getClass("SBOrientationLockManager");
         if (lockClass) {
             SBOrientationLockManager *mgr = [lockClass sharedInstance];
             if (mgr) {
-                if ([mgr respondsToSelector:@selector(unlock)]) {
-                    [mgr unlock];
+                tempUnlockedForSession = NO;
+                activeLandscapeOrientation = UIInterfaceOrientationUnknown;
+                candidateOrientation = UIInterfaceOrientationUnknown;
+                if ([mgr respondsToSelector:@selector(lock)]) {
+                    [mgr lock];
                 }
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.15 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    @try {
-                        if ([mgr respondsToSelector:@selector(lock)]) {
-                            [mgr lock];
-                        }
-                    } @catch (NSException *lEx) {}
-                });
             }
         }
         
         // Notify device back to portrait
-        if (@available(iOS 16.0, *)) {
-            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-                if ([scene isKindOfClass:[UIWindowScene class]]) {
-                    UIWindowScene *windowScene = (UIWindowScene *)scene;
-                    #pragma clang diagnostic push
-                    #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-                    SEL updateSel = NSSelectorFromString(@"requestGeometryUpdateWithPreferences:errorHandler:");
-                    if ([windowScene respondsToSelector:updateSel]) {
-                        Class prefClass = NSClassFromString(@"UIWindowSceneGeometryPreferencesIOS");
-                        if (prefClass) {
-                            id prefsObj = [[prefClass alloc] init];
-                            if ([prefsObj respondsToSelector:@selector(setInterfaceOrientations:)]) {
-                                [prefsObj setValue:@(UIInterfaceOrientationMaskPortrait) forKey:@"interfaceOrientations"];
-                                [windowScene performSelector:updateSel withObject:prefsObj withObject:nil];
-                            }
-                        }
-                    }
-                    #pragma clang diagnostic pop
-                }
-            }
-        }
-
         @try {
             [[UIDevice currentDevice] setValue:@(UIDeviceOrientationPortrait) forKey:@"orientation"];
         } @catch (NSException *ex) {}
         [[NSNotificationCenter defaultCenter] postNotificationName:UIDeviceOrientationDidChangeNotification object:[UIDevice currentDevice]];
     } @catch (NSException *e) {
         NSLog(@"[OrientFlow] Exception in SafeRelockOrientation: %@", e);
+    } @finally {
+        isRelocking = NO;
     }
 }
 
@@ -155,10 +132,32 @@ static void ReloadPrefsCallback(CFNotificationCenterRef center, void *observer, 
     [[OFPrefs sharedInstance] loadSettings];
 }
 
+static void SystemLockStateChanged(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        gIsScreenLocked = YES;
+        if (tempUnlockedForSession) {
+            SafeRelockOrientation();
+        }
+        if ([[OFButtonWindow sharedWindow] isPromptShowing]) {
+            [[OFButtonWindow sharedWindow] hidePrompt];
+        }
+    });
+}
+
 static void ProcessDeviceMotion(CMDeviceMotion *motion) {
     @try {
         OFPrefs *prefs = [OFPrefs sharedInstance];
         if (!prefs.enabled) return;
+
+        // Check lock screen using cached thread-safe flag
+        if (gIsScreenLocked && prefs.disableOnLockScreen) {
+            return;
+        }
+
+        // Check allowed app using cached thread-safe bundle ID
+        if (![prefs isAppAllowed:gCurrentActiveBundleID]) {
+            return;
+        }
 
         Class lockClass = objc_getClass("SBOrientationLockManager");
         if (!lockClass) return;
@@ -167,61 +166,8 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
         if (!lockMgr) return;
 
         BOOL isLocked = [lockMgr respondsToSelector:@selector(isUserLocked)] ? [lockMgr isUserLocked] : NO;
-        if (!isLocked && !gOrientFlowLockedLandscape) {
-            // Orientation lock is OFF in Control Center -> iOS runs free auto-rotation! OrientFlow does not interfere!
-            return;
-        }
-
-        // Check Lock Screen
-        BOOL isLockScreen = NO;
-        Class lsClass = objc_getClass("SBLockScreenManager");
-        if (lsClass) {
-            SBLockScreenManager *lsMgr = [lsClass sharedInstance];
-            if ([lsMgr respondsToSelector:@selector(isUILocked)]) {
-                isLockScreen = [lsMgr isUILocked];
-            }
-        }
-        if (isLockScreen) {
-            if (gOrientFlowLockedLandscape) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    SafeRelockOrientation();
-                });
-            }
-            if (prefs.disableOnLockScreen) {
-                if ([[OFButtonWindow sharedWindow] isPromptShowing]) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [[OFButtonWindow sharedWindow] hidePrompt];
-                    });
-                }
-                return;
-            }
-        }
-
-        // Check Active Application
-        SpringBoard *sb = (SpringBoard *)[UIApplication sharedApplication];
-        SBApplication *frontApp = nil;
-        if ([sb respondsToSelector:@selector(_accessibilityFrontMostApplication)]) {
-            frontApp = [sb _accessibilityFrontMostApplication];
-        }
-        NSString *currentBundleID = frontApp ? [frontApp bundleIdentifier] : @"com.apple.springboard";
-
-        // If app changed while in locked landscape session, safely relock to portrait
-        if (lastActiveBundleID && ![lastActiveBundleID isEqualToString:currentBundleID]) {
-            if (gOrientFlowLockedLandscape) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    SafeRelockOrientation();
-                });
-            }
-        }
-        lastActiveBundleID = currentBundleID;
-
-        // Check if current app is allowed
-        if (![prefs isAppAllowed:currentBundleID]) {
-            if ([[OFButtonWindow sharedWindow] isPromptShowing]) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [[OFButtonWindow sharedWindow] hidePrompt];
-                });
-            }
+        if (!isLocked && !tempUnlockedForSession) {
+            // User turned off orientation lock in Control Center -> device auto-rotates freely, tweak does nothing
             return;
         }
 
@@ -245,11 +191,13 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
             }
         } else if (gy < -0.70 && fabs(gx) < 0.45) {
             // Device is held upright in Portrait
-            if (prefs.autoRelockOnPortrait || !prefs.lockLandscapeMode) {
-                if (gOrientFlowLockedLandscape || activeLandscapeOrientation != UIInterfaceOrientationUnknown) {
+            if (!prefs.lockLandscapeMode || prefs.autoRelockOnPortrait) {
+                if (tempUnlockedForSession) {
                     dispatch_async(dispatch_get_main_queue(), ^{
                         SafeRelockOrientation();
                     });
+                } else {
+                    activeLandscapeOrientation = UIInterfaceOrientationUnknown;
                 }
             }
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -266,7 +214,7 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
             return;
         }
 
-        // If user already tapped and accepted this exact landscape orientation, DO NOT show prompt again
+        // If user already tapped and confirmed this orientation, do not prompt again
         if (activeLandscapeOrientation == target) {
             return;
         }
@@ -297,25 +245,26 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
     }
 }
 
-%hook SBOrientationLockManager
-
-- (NSInteger)userLockOrientation {
-    if (gOrientFlowLockedLandscape && gOrientFlowLockedOrientation != UIInterfaceOrientationUnknown) {
-        return (NSInteger)gOrientFlowLockedOrientation;
-    }
-    return %orig;
-}
-
-- (NSInteger)effectiveLockedOrientation {
-    if (gOrientFlowLockedLandscape && gOrientFlowLockedOrientation != UIInterfaceOrientationUnknown) {
-        return (NSInteger)gOrientFlowLockedOrientation;
-    }
-    return %orig;
-}
-
-%end
-
 %hook SpringBoard
+
+- (void)frontDisplayDidChange:(id)newDisplay {
+    %orig;
+
+    NSString *bundleID = nil;
+    if (newDisplay && [newDisplay respondsToSelector:@selector(bundleIdentifier)]) {
+        bundleID = [newDisplay bundleIdentifier];
+    }
+    gCurrentActiveBundleID = [bundleID copy] ?: @"com.apple.springboard";
+
+    // Whenever user switches apps or exits to Homescreen, restore portrait orientation lock immediately
+    if (tempUnlockedForSession) {
+        SafeRelockOrientation();
+    }
+
+    if ([[OFButtonWindow sharedWindow] isPromptShowing]) {
+        [[OFButtonWindow sharedWindow] hidePrompt];
+    }
+}
 
 - (void)applicationDidFinishLaunching:(id)application {
     %orig;
@@ -327,6 +276,24 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
         NULL,
         ReloadPrefsCallback,
         CFSTR(kOrientFlowPrefsNotification),
+        NULL,
+        CFNotificationSuspensionBehaviorCoalesce
+    );
+
+    // Monitor device lock and screen-off events to safely relock orientation
+    CFNotificationCenterAddObserver(
+        CFNotificationCenterGetDarwinNotifyCenter(),
+        NULL,
+        SystemLockStateChanged,
+        CFSTR("com.apple.springboard.lockstate"),
+        NULL,
+        CFNotificationSuspensionBehaviorCoalesce
+    );
+    CFNotificationCenterAddObserver(
+        CFNotificationCenterGetDarwinNotifyCenter(),
+        NULL,
+        SystemLockStateChanged,
+        CFSTR("com.apple.springboard.hasBlankedScreen"),
         NULL,
         CFNotificationSuspensionBehaviorCoalesce
     );
@@ -345,6 +312,18 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
                 ProcessDeviceMotion(motion);
             }
         }];
+    }
+}
+
+%end
+
+%hook SBLockScreenManager
+
+- (void)_setUILocked:(BOOL)locked {
+    %orig;
+    gIsScreenLocked = locked;
+    if (locked && tempUnlockedForSession) {
+        SafeRelockOrientation();
     }
 }
 
