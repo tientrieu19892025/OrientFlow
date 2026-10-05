@@ -134,8 +134,11 @@ static void ReloadPrefsCallback(CFNotificationCenterRef center, void *observer, 
 
 static void SystemLockStateChanged(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        gIsScreenLocked = YES;
-        if (tempUnlockedForSession) {
+        SpringBoard *sb = (SpringBoard *)[UIApplication sharedApplication];
+        if ([sb respondsToSelector:@selector(isLocked)]) {
+            gIsScreenLocked = [sb isLocked];
+        }
+        if (gIsScreenLocked && tempUnlockedForSession) {
             SafeRelockOrientation();
         }
         if ([[OFButtonWindow sharedWindow] isPromptShowing]) {
@@ -149,16 +152,6 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
         OFPrefs *prefs = [OFPrefs sharedInstance];
         if (!prefs.enabled) return;
 
-        // Check lock screen using cached thread-safe flag
-        if (gIsScreenLocked && prefs.disableOnLockScreen) {
-            return;
-        }
-
-        // Check allowed app using cached thread-safe bundle ID
-        if (![prefs isAppAllowed:gCurrentActiveBundleID]) {
-            return;
-        }
-
         Class lockClass = objc_getClass("SBOrientationLockManager");
         if (!lockClass) return;
 
@@ -168,6 +161,16 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
         BOOL isLocked = [lockMgr respondsToSelector:@selector(isUserLocked)] ? [lockMgr isUserLocked] : NO;
         if (!isLocked && !tempUnlockedForSession) {
             // User turned off orientation lock in Control Center -> device auto-rotates freely, tweak does nothing
+            return;
+        }
+
+        // Check lock screen using cached flag
+        if (gIsScreenLocked && prefs.disableOnLockScreen) {
+            return;
+        }
+
+        // Check allowed app using cached bundle ID
+        if (![prefs isAppAllowed:gCurrentActiveBundleID]) {
             return;
         }
 
@@ -190,7 +193,9 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
                 target = UIInterfaceOrientationLandscapeRight;
             }
         } else if (gy < -0.70 && fabs(gx) < 0.45) {
-            // Device is held upright in Portrait
+            // Device is held upright in Portrait: reset candidate orientation so subsequent tilts prompt immediately
+            candidateOrientation = UIInterfaceOrientationUnknown;
+
             if (!prefs.lockLandscapeMode || prefs.autoRelockOnPortrait) {
                 if (tempUnlockedForSession) {
                     dispatch_async(dispatch_get_main_queue(), ^{
@@ -220,8 +225,8 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
         }
 
         NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-        // Cooldown 3.5 seconds between prompts for same target
-        if (candidateOrientation == target && (now - lastTriggerTime < 3.5)) {
+        // Cooldown 3.0 seconds between prompts for same target
+        if (candidateOrientation == target && (now - lastTriggerTime < 3.0)) {
             return;
         }
 
@@ -230,6 +235,28 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
 
         dispatch_async(dispatch_get_main_queue(), ^{
             @try {
+                SpringBoard *sb = (SpringBoard *)[UIApplication sharedApplication];
+                if ([sb respondsToSelector:@selector(isLocked)]) {
+                    gIsScreenLocked = [sb isLocked];
+                }
+                if (gIsScreenLocked && prefs.disableOnLockScreen) {
+                    return;
+                }
+
+                // Verify active app directly on main thread
+                if ([sb respondsToSelector:@selector(_accessibilityFrontMostApplication)]) {
+                    SBApplication *frontApp = [sb _accessibilityFrontMostApplication];
+                    if (frontApp && [frontApp respondsToSelector:@selector(bundleIdentifier)]) {
+                        NSString *bid = [frontApp bundleIdentifier];
+                        if (bid && bid.length > 0) {
+                            gCurrentActiveBundleID = [bid copy];
+                        }
+                    }
+                }
+                if (![prefs isAppAllowed:gCurrentActiveBundleID]) {
+                    return;
+                }
+
                 if ([[OFButtonWindow sharedWindow] isPromptShowing]) {
                     return;
                 }
@@ -270,6 +297,20 @@ static void ProcessDeviceMotion(CMDeviceMotion *motion) {
     %orig;
 
     [[OFPrefs sharedInstance] loadSettings];
+
+    SpringBoard *sb = (SpringBoard *)[UIApplication sharedApplication];
+    if ([sb respondsToSelector:@selector(isLocked)]) {
+        gIsScreenLocked = [sb isLocked];
+    }
+    if ([sb respondsToSelector:@selector(_accessibilityFrontMostApplication)]) {
+        SBApplication *frontApp = [sb _accessibilityFrontMostApplication];
+        if (frontApp && [frontApp respondsToSelector:@selector(bundleIdentifier)]) {
+            NSString *bid = [frontApp bundleIdentifier];
+            if (bid && bid.length > 0) {
+                gCurrentActiveBundleID = [bid copy];
+            }
+        }
+    }
 
     CFNotificationCenterAddObserver(
         CFNotificationCenterGetDarwinNotifyCenter(),
